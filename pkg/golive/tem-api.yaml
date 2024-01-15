@@ -1,0 +1,2732 @@
+
+openapi: 3.0.3
+info:
+  description: Browse and use the Apwide Environment REST API
+  version: v1.1
+  title: Apwide Environment API
+  termsOfService: https://www.apwide.com
+  contact:
+    name: Apwide Support
+    url: https://apwide.com
+    email: support@apwide.com
+
+servers:
+  - url: http://localhost:2990/rest/apwide/tem/1.1
+    description: default base path
+
+tags:
+  - name: Application
+  - name: Category
+  - name: Deployment
+  - name: Version
+  - name: Environment
+  - name: Environment Status
+  - name: Environment Status Change
+  - name: Watcher
+  - name: Custom Field
+
+paths:
+  /application:
+    post:
+      tags:
+        - Application
+      summary: Create a new application
+      description: ""
+      x-apw-operation-id: create
+      requestBody:
+        required: true
+        description: "An application request"
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ApplicationRequest"
+      responses:
+        400:
+          $ref: "#/components/responses/400"
+        200:
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApplicationResponse"
+
+  /application/{id}:
+    get:
+      tags:
+        - Application
+      summary: Get an application
+      description: ''
+      x-apw-operation-id: get
+      parameters:
+        - name: id
+          in: path
+          required: true
+          example: 1
+          schema:
+            type: integer
+            format: int32
+      responses:
+        404:
+          $ref: "#/components/responses/404"
+        200:
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApplicationResponse"
+    put:
+      tags:
+        - Application
+      summary: Update an application
+      description: |-
+        # Updating an application
+        Updating an application can be done in patch style mode. For example:
+        * select an id
+        * provide the id in the URL
+        * call the method
+      x-apw-operation-id: put
+      parameters:
+        - name: id
+          in: path
+          required: true
+          example: 1
+          schema:
+            type: integer
+            format: int32
+      requestBody:
+        required: true
+        description: "An application request"
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ApplicationRequest"
+      responses:
+        404:
+          $ref: "#/components/responses/404"
+        400:
+          $ref: "#/components/responses/400"
+        200:
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApplicationResponse"
+    delete:
+      tags:
+        - Application
+      summary: Delete an application
+      description: ''
+      x-apw-operation-id: delete
+      parameters:
+        - name: id
+          in: path
+          required: true
+          example: 1
+          schema:
+            type: integer
+            format: int32
+      responses:
+        404:
+          $ref: "#/components/responses/404"
+        200:
+          description: successful operation
+  /applications:
+    get:
+      tags:
+        - Application
+      summary: Find applications
+      description: ''
+      x-apw-operation-id: getApplications
+      x-apw-context: true
+      parameters:
+        - name: _expand
+          in: query
+          description: Set it to false for lighter JSON
+          required: false
+          schema:
+            type: boolean
+            default: false
+      responses:
+        200:
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/ApplicationResponse"
+
+  /category:
+    post:
+      tags:
+        - Category
+      summary: Create new category
+      description: ''
+      x-apw-operation-id: create
+      requestBody:
+        required: true
+        description: "A category"
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/EnvironmentCategory"
+      responses:
+        400:
+          $ref: "#/components/responses/400"
+        200:
+          description: successful operation
+          content:
+            'application/json':
+              schema:
+                $ref: "#/components/schemas/EnvironmentCategory"
+  /category/{id}:
+    get:
+      tags:
+        - Category
+      summary: Get category
+      description: ''
+      x-apw-operation-id: get
+      parameters:
+        - name: id
+          in: path
+          required: true
+          example: 1
+          schema:
+            type: integer
+            format: int32
+      responses:
+        404:
+          $ref: "#/components/responses/404"
+        200:
+          description: successful operation
+          content:
+            'application/json':
+              schema:
+                $ref: "#/components/schemas/EnvironmentCategory"
+      security:
+        - BasicAuth: [ ]
+    put:
+      tags:
+        - Category
+      summary: Update category
+      description: ''
+      x-apw-operation-id: update
+      parameters:
+        - name: id
+          in: path
+          required: true
+          example: 1
+          schema:
+            type: integer
+            format: int32
+      requestBody:
+        description: a category
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/EnvironmentCategory"
+      responses:
+        404:
+          $ref: "#/components/responses/404"
+        400:
+          $ref: "#/components/responses/400"
+        200:
+          description: successful operation
+          content:
+            'application/json':
+              schema:
+                $ref: "#/components/schemas/EnvironmentCategory"
+    delete:
+      tags:
+        - Category
+      summary: Delete category
+      description: ''
+      operationId: delete
+      parameters:
+        - name: id
+          in: path
+          required: true
+          example: 1
+          schema:
+            type: integer
+            format: int32
+      responses:
+        404:
+          $ref: "#/components/responses/404"
+        200:
+          description: successful operation
+          content:
+            'application/json':
+              schema:
+                $ref: "#/components/schemas/EnvironmentCategory"
+  /categories:
+    get:
+      tags:
+        - Category
+      summary: Get all categories
+      description: ''
+      x-apw-operation-id: getAll
+      responses:
+        200:
+          description: successful operation
+          content:
+            'application/json':
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/EnvironmentCategory"
+  /status:
+    post:
+      tags:
+        - Environment Status
+      summary: Create new environment status
+      description: ''
+      x-apw-operation-id: create
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/EnvironmentStatus"
+      responses:
+        400:
+          $ref: "#/components/responses/400"
+        200:
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/EnvironmentStatus"
+  /status/{id}:
+    get:
+      tags:
+        - Environment Status
+      summary: Get environment status
+      description: ''
+      x-apw-operation-id: get
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int32
+          x-example: 1
+      responses:
+        404:
+          $ref: "#/components/responses/404"
+        200:
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/EnvironmentStatus"
+    put:
+      tags:
+        - Environment Status
+      summary: Update an environment status
+      description: ''
+      x-apw-operation-id: update
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/EnvironmentStatus"
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int32
+          x-example: 1
+      responses:
+        404:
+          $ref: "#/components/responses/404"
+        400:
+          $ref: "#/components/responses/400"
+        200:
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/EnvironmentStatus"
+    delete:
+      tags:
+        - Environment Status
+      summary: Delete an environment status
+      description: ''
+      x-apw-operation-id: delete
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int32
+          x-example: 1
+      responses:
+        404:
+          $ref: "#/components/responses/404"
+        200:
+          description: successful operation
+  /statuses:
+    get:
+      tags:
+        - Environment Status
+      summary: Get all existing Statuses
+      description: ''
+      x-apw-operation-id: getAllStatuses
+      responses:
+        200:
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/EnvironmentStatus"
+
+  /deployment:
+    get:
+      tags:
+        - Deployment
+      summary: Get the deployed version
+      description: ''
+      x-apw-operation-id: get
+      parameters:
+        - name: environmentId
+          in: query
+          description: "Environment id. Ex: 1"
+          required: false
+          schema:
+            type: integer
+            format: int32
+            example: 1
+        - name: application
+          in: query
+          description: "Application name. Ex: eCommerce"
+          required: false
+          schema:
+            type: string
+            example: eCommerce
+        - name: category
+          in: query
+          description: "Category name. Ex: Staging"
+          required: false
+          schema:
+            type: string
+            example: Staging
+        - name: dateTime
+          in: query
+          description: "Date in the past. Ex: 2018-01-31 13:30 or in ms : 1537679702182"
+          required: false
+          schema:
+            type: string
+        - name: time
+          in: query
+          description: |
+            Absolute time in ms. Ex: 12300054 . Note that time must be in
+            the past. Time will override dateTime param if both params are set.
+          required: false
+          schema:
+            type: integer
+            format: int64
+      responses:
+        404:
+          $ref: "#/components/responses/404"
+        200:
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DeploymentResponse"
+    put:
+      tags:
+        - Deployment
+      summary: Update the deployed version
+      description: ''
+      x-apw-operation-id: deploy
+      parameters:
+        - name: environmentId
+          in: query
+          description: "Environment id. Ex: 1"
+          required: false
+          schema:
+            type: integer
+            format: int32
+            example: 1
+        - name: application
+          in: query
+          description: "Application name. Ex: eCommerce"
+          required: false
+          schema:
+            type: string
+            example: eCommerce
+        - name: category
+          in: query
+          description: "Category name. Ex: Staging"
+          required: false
+          schema:
+            type: string
+            example: Staging
+        - name: dateTime
+          in: query
+          description: |
+            Date in the past. Ex: 2018-01-31 13:30. Note that timezone of
+            the server will be used to get the time! Prefer using the time parameter
+            in ms to avoid timezone issues.
+          required: false
+          schema:
+            type: string
+        - name: time
+          in: query
+          description: |
+            Absolute time in ms. Ex: 12300054 . Note that time must be in
+            the past. Time will override dateTime param if both params are set.
+          required: false
+          schema:
+            type: integer
+            format: int64
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/DeploymentRequest"
+      responses:
+        400:
+          $ref: "#/components/responses/400"
+        200:
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DeploymentResponse"
+  /deployment/{id}:
+    get:
+      tags:
+        - Deployment
+      summary: Get deployment
+      description: ''
+      x-apw-operation-id: get
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int32
+            example: 1
+      responses:
+        404:
+          $ref: "#/components/responses/404"
+        200:
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DeploymentResponse"
+    delete:
+      tags:
+        - Deployment
+      summary: Remove deployment
+      description: ''
+      x-apw-operation-id: delete
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int32
+            example: 1
+      responses:
+        404:
+          $ref: "#/components/responses/404"
+        200:
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DeploymentResponse"
+  /deployments:
+    get:
+      tags:
+        - Deployment
+      summary: Search deployments
+      description: ''
+      x-apw-operation-id: find
+      parameters:
+        - name: environmentId
+          in: query
+          required: false
+          schema:
+            type: integer
+            format: int32
+            example: 1
+        - name: application
+          in: query
+          required: false
+          schema:
+            type: string
+            example: eCommerce
+        - name: category
+          in: query
+          required: false
+          schema:
+            type: string
+            example: Staging
+        - name: start
+          in: query
+          description: "Ex: 2018-01-31"
+          required: false
+          schema:
+            type: string
+        - name: end
+          in: query
+          description: "Ex: 2018-02-25"
+          required: false
+          schema:
+            type: string
+        - name: maxResults
+          in: query
+          description: "Unlimited number of results: -1"
+          required: false
+          schema:
+            type: integer
+            default: -1
+            format: int64
+            example: 20
+        - name: expand
+          in: query
+          description: Set it to false for lighter JSON
+          required: false
+          schema:
+            type: boolean
+            default: false
+            example: true
+      responses:
+        200:
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/DeploymentResponse"
+  /deployments/issue:
+    post:
+      tags:
+        - Deployment
+      x-apw-operation-id: issueDeployed
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/IssueDeployedRequest"
+      responses:
+        default:
+          description: successful operation
+
+  /version:
+    post:
+      tags:
+        - Version
+      summary: Create and Update Jira Versions
+      description: ''
+      x-apw-operation-id: sendVersionInformation
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/VersionInfoRequest"
+      responses:
+        200:
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/VersionInfoResponse"
+        400:
+          $ref: "#/components/responses/400"
+
+  /status-change:
+    get:
+      tags:
+        - Environment Status Change
+      summary: Get current status of an environment
+      description: ''
+      x-apw-operation-id: get
+      parameters:
+        - name: environmentId
+          in: query
+          description: "Environment id. Ex: 1"
+          required: false
+          schema:
+            type: integer
+            format: int32
+            example: 1
+        - name: application
+          in: query
+          description: "Application name. Ex: eCommerce"
+          required: false
+          schema:
+            type: string
+            example: eCommerce
+        - name: category
+          in: query
+          description: "Category name. Ex: Staging"
+          required: false
+          schema:
+            type: string
+            example: Staging
+      responses:
+        404:
+          $ref: "#/components/responses/404"
+        200:
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StatusChange"
+    put:
+      tags:
+        - Environment Status Change
+      summary: Change status of an environment
+      description: ''
+      x-apw-operation-id: changeStatus
+      parameters:
+        - name: environmentId
+          in: query
+          description: "Environment id. Ex: 1"
+          required: false
+          schema:
+            type: integer
+            format: int32
+            example: 1
+        - name: application
+          in: query
+          description: "Application name. Ex: eCommerce"
+          required: false
+          schema:
+            type: string
+            example: eCommerce
+        - name: category
+          in: query
+          description: "Category name. Ex: Staging"
+          required: false
+          schema:
+            type: string
+            example: Staging
+      requestBody:
+        required: true
+        description: |
+          Examples of valid json body:
+            {"name":"Unavailable"}
+          or
+          {id": 1}
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/EnvironmentStatusChangeRequest"
+      responses:
+        404:
+          $ref: "#/components/responses/404"
+        400:
+          $ref: "#/components/responses/400"
+        200:
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StatusChange"
+  /status-changes:
+    get:
+      tags:
+        - Environment Status Change
+      summary: Search for status changes
+      description: ''
+      x-apw-operation-id: find
+      parameters:
+        - name: environmentId
+          in: query
+          description: 'Environment id. Ex: 1'
+          required: false
+          schema:
+            type: integer
+            format: int32
+            example: 1
+        - name: application
+          in: query
+          description: 'Application name. Ex: eCommerce'
+          required: false
+          schema:
+            type: string
+            example: eCommerce
+        - name: category
+          in: query
+          description: 'Category name. Ex: Staging'
+          required: false
+          schema:
+            type: string
+            example: Staging
+        - name: start
+          in: query
+          description: 'Ex: 2018-01-31'
+          required: false
+          schema:
+            type: string
+        - name: end
+          in: query
+          description: 'Ex: 2019-01-31'
+          required: false
+          schema:
+            type: string
+        - name: maxResult
+          in: query
+          description: 'Unlimited number of results: -1'
+          required: false
+          schema:
+            type: integer
+            default: -1
+            format: int64
+            example: 20
+        - name: expand
+          in: query
+          description: Set it to false for lighter JSON
+          required: false
+          schema:
+            type: boolean
+            default: false
+            example: true
+      responses:
+        200:
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/StatusChange"
+    post:
+      tags:
+        - Environment Status Change
+      summary: Change status of environments matching criteria
+      description: ''
+      x-apw-operation-id: changeStatuses
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ScopedStatusChangeRequest"
+      responses:
+        400:
+          $ref: "#/components/responses/400"
+        200:
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StatusChangesResponse"
+    put:
+      tags:
+        - Environment Status Change
+      summary: Change status of environments matching criteria
+      description: ''
+      x-apw-operation-id: changeStatusesPut
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ScopedStatusChangeRequest"
+      responses:
+        400:
+          $ref: "#/components/responses/400"
+        200:
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StatusChangesResponse"
+  /environment:
+    get:
+      tags:
+        - Environment
+      summary: Get an environment by application and category
+      description: ''
+      x-apw-operation-id: get
+      parameters:
+        - name: application
+          in: query
+          description: "Application name. Ex: eCommerce"
+          required: true
+          schema:
+            type: string
+            example: eCommerce
+        - name: category
+          in: query
+          description: "Category name. Ex: Staging"
+          required: true
+          schema:
+            type: string
+            example: Staging
+      responses:
+        200:
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/EnvironmentResponse"
+    post:
+      tags:
+        - Environment
+      summary: Create a new environment
+      description: ''
+      x-apw-operation-id: create
+      requestBody:
+        required: true
+        description: |-
+          Example of realistic body: <pre><code>{
+            "application": { "name": "eCommerce" },
+            "category": { "name":"Staging" },
+            "environmentPermissionScheme": { "id": 1 },
+            "url": "https://ecom-staging-my-company.com/welcome",
+            "attributes": {
+              "OS": "RedHat 7",
+              "database": "postgres",
+              "location": "EU"
+            }
+          }</code></pre>
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/EnvironmentRequest"
+      responses:
+        200:
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/EnvironmentResponse"
+  /environment/{id}:
+    get:
+      tags:
+        - Environment
+      summary: Get an environment by id
+      description: ''
+      x-apw-operation-id: get
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int32
+            example: 1
+      responses:
+        200:
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/EnvironmentResponse"
+    put:
+      tags:
+        - Environment
+      summary: Update an environment
+      description: ''
+      x-apw-operation-id: update
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int32
+            example: 1
+      requestBody:
+        required: true
+        description: |-
+          Example: set url and some attributes: <pre><code>{
+            "url": "https://ecom-staging-my-company.com/welcome/NEWURL",
+            "attributes": {
+              "OS": "RedHat 8",
+              "database": "mongo",
+              "location": "US"
+            }
+          }</code></pre><br/>Example: change application and category: <pre><code>{
+            "application": {
+              "name": "Payment Service"
+            },
+            "category": {
+              "name": "Demo"
+            }
+          }</code></pre>
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/EnvironmentRequest"
+      responses:
+        200:
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/EnvironmentResponse"
+      security:
+        - BasicAuth: []
+    delete:
+      tags:
+        - Environment
+      summary: Delete environment
+      description: ''
+      x-apw-operation-id: delete
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int32
+            example: 1
+      responses:
+        200:
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/EnvironmentResponse"
+  /environment/information:
+    post:
+      tags:
+        - Environment
+      summary: Create and Push Environment Information
+      description: ''
+      x-apw-operation-id: sendInfo
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/EnvironmentInfoRequest"
+      responses:
+        200:
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/EnvironmentInfoResponse"
+        400:
+          $ref: "#/components/responses/400"
+  /environments/search:
+    get:
+      tags:
+        - Environment
+      summary: Search environments by query parameters
+      description: |
+        Combine any pre-defined <b>search parameters listed below</b>
+        and pass them to url as query parameters. <br/><br/>Other parameters you can
+        use:<br/>* parameters with no value to perform a <b>free text search</b> on
+        all information of your environments (ex: <i>?Staging&eCommerce&RedHat</i>)<br/>*
+        name of an <b>attribute as query parameter</b> (ex: <i>?OS=RedHat&database=Postgresql</i>)<br/><br/>Note
+        that you can send the same parameter <b>multiple times</b> with different
+        values (ex: <i>?applicationName=eCommerce&applicationName=PaymentService</i>).
+        It will return environments matching at least one of the values'
+      x-apw-operation-id: legacySearch
+      x-apw-context-only: true
+      parameters:
+        - name: applicationName
+          in: query
+          description: "Application name (ex: eCommerce)"
+          required: false
+          explode: true
+          schema:
+            type: array
+            items:
+              type: string
+        - name: applicationId
+          in: query
+          description: "Application id (ex: 23)"
+          required: false
+          explode: true
+          schema:
+            type: array
+            items:
+              type: integer
+              format: int64
+        - name: categoryName
+          in: query
+          description: "Category Name (ex: Staging)"
+          required: false
+          explode: true
+          schema:
+            type: array
+            items:
+              type: string
+        - name: categoryId
+          in: query
+          description: "Category id (ex: 2)"
+          required: false
+          explode: true
+          schema:
+            type: array
+            items:
+              type: integer
+              format: int64
+        - name: statusName
+          in: query
+          description: "Status Name (ex: Slow)"
+          required: false
+          explode: true
+          schema:
+            type: array
+            items:
+              type: string
+        - name: statusId
+          in: query
+          description: "Status id (ex: 3)"
+          required: false
+          explode: true
+          schema:
+            type: array
+            items:
+              type: integer
+              format: int64
+        - name: permissionSchemeName
+          in: query
+          description: "Permission scheme name (ex: Default Environment Permission Scheme)"
+          required: false
+          explode: true
+          schema:
+            type: array
+            items:
+              type: string
+        - name: permissionSchemeId
+          in: query
+          description: "Permission scheme id (ex: 1)"
+          required: false
+          explode: true
+          schema:
+            type: array
+            items:
+              type: integer
+              format: int64
+        - name: _limit
+          in: query
+          description: "Max number of results (0 = unlimited)"
+          required: false
+          schema:
+            type: integer
+            default: 0
+            format: int64
+        - name: _offset
+          in: query
+          description: "First result to return (ex: 10)"
+          required: false
+          schema:
+            type: integer
+            default: 0
+            format: int64
+        - name: _sortOrder
+          in: query
+          description: "Sort order"
+          required: false
+          schema:
+            type: string
+            default: asc
+            example: asc, desc
+        - name: _sortBy
+          in: query
+          description: "Sort by"
+          required: false
+          schema:
+            type: string
+            default: application_and_category
+            example: application, category, deployment, status
+        - name: _expand
+          in: query
+          description: "Set it to false for lighter JSON"
+          required: false
+          schema:
+            type: boolean
+            default: true
+      responses:
+        200:
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/EnvironmentResponse"
+      deprecated: true
+    post:
+      tags:
+        - Environment
+      summary: Search environments by search filter object
+      description: |
+        You can use the same search criteria as the 'GET' version of <i>/environments/search</i>
+        in a JSON object to trigger the search. <br/>Please refer to documentation
+        of the 'GET' version of <i>/environments/search</i>  to get the list of available
+        criteria.
+      x-apw-operation-id: legacySearch
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/EnvironmentFilter"
+      responses:
+        200:
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/EnvironmentResponse"
+      deprecated: true
+  /environments/search/paginated:
+    get:
+      tags:
+        - Environment
+      summary: Search environments by query parameters
+      description: |
+        Combine any pre-defined <b>search parameters listed below</b>
+        and pass them to url as query parameters. <br/><br/>Other parameters you can
+        use:<br/>* parameters with no value to perform a <b>free text search</b> on
+        all information of your environments (ex: <i>?Staging&eCommerce&RedHat</i>)<br/>*
+        name of an <b>attribute as query parameter</b> (ex: <i>?OS=RedHat&database=Postgresql</i>)<br/><br/>Note
+        that you can send the same parameter <b>multiple times</b> with different
+        values (ex: <i>?applicationName=eCommerce&applicationName=PaymentService</i>).
+        It will return environments matching at least one of the values
+      x-apw-operation-id: search
+      x-apw-context-only: true
+      parameters:
+        - name: environmentId
+          in: query
+          description: 'Environment id (ex: 23)'
+          required: false
+          explode: true
+          schema:
+            type: array
+            items:
+              type: integer
+              format: int64
+        - name: environmentName
+          in: query
+          description: 'Environment name (ex: eCommerce Dev 1)'
+          required: false
+          explode: true
+          schema:
+            type: array
+            items:
+              type: string
+        - name: applicationName
+          in: query
+          description: 'Application name (ex: eCommerce)'
+          required: false
+          explode: true
+          schema:
+            type: array
+            items:
+              type: string
+        - name: applicationId
+          in: query
+          description: 'Application id (ex: 23)'
+          required: false
+          explode: true
+          schema:
+            type: array
+            items:
+              type: integer
+              format: int64
+        - name: categoryName
+          in: query
+          description: 'Category Name (ex: Staging)'
+          required: false
+          explode: true
+          schema:
+            type: array
+            items:
+              type: string
+        - name: categoryId
+          in: query
+          description: 'Category id (ex: 2)'
+          required: false
+          explode: true
+          schema:
+            type: array
+            items:
+              type: integer
+              format: int64
+        - name: statusName
+          in: query
+          description: 'Status Name (ex: Slow)'
+          required: false
+          explode: true
+          schema:
+            type: array
+            items:
+              type: string
+        - name: statusId
+          in: query
+          description: 'Status id (ex: 3)'
+          required: false
+          explode: true
+          schema:
+            type: array
+            items:
+              type: integer
+              format: int64
+        - name: permissionSchemeName
+          in: query
+          description: 'Permission scheme name (ex: Default Environment Permission Scheme)'
+          required: false
+          explode: true
+          schema:
+            type: array
+            items:
+              type: string
+        - name: permissionSchemeId
+          in: query
+          description: "Permission scheme id (ex: 1)"
+          required: false
+          explode: true
+          schema:
+            type: array
+            items:
+              type: integer
+              format: int64
+        - name: panelSchemeId
+          in: query
+          description: "Panel scheme id (ex: 1)"
+          required: false
+          explode: true
+          schema:
+            type: array
+            items:
+              type: integer
+              format: int64
+        - name: tierRelation
+          in: query
+          description: "Tier relation type (ex: HAS_TIERS, HAS_NO_TIERS, HAS_PARENT, IS_TIER, IS_ORPHAN)"
+          required: false
+          explode: true
+          schema:
+            type: array
+            items:
+              type: string
+        - name: _limit
+          in: query
+          description: Max number of results (0 = unlimited)
+          required: false
+          schema:
+            type: integer
+            default: 0
+            format: int64
+        - name: _offset
+          in: query
+          description: 'First result to return (ex: 10)'
+          required: false
+          schema:
+            type: integer
+            default: 0
+            format: int64
+        - name: _sortOrder
+          in: query
+          description: Sort order
+          required: false
+          schema:
+            type: string
+            default: asc
+            example: asc, desc
+        - name: _sortBy
+          in: query
+          description: Sort by
+          required: false
+          schema:
+            type: string
+            default: application_and_category
+            example: application, category, deployment, status
+        - name: _expand
+          in: query
+          description: Set it to false for lighter JSON
+          required: false
+          schema:
+            type: boolean
+            default: true
+      responses:
+        200:
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PaginatedEnvironmentResponse"
+    post:
+      tags:
+        - Environment
+      summary: Search environments by search filter object
+      description: |
+        You can use the same search criteria as the 'GET' version of <i>/environments/search/paginated</i>
+        in a JSON object to trigger the search. <br/>Please refer to documentation
+        of the 'GET' version of <i>/environments/search/paginated</i>  to get the
+        list of available criteria.
+      x-apw-operation-id: search
+      requestBody:
+        required: true
+        description: search filter object
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/EnvironmentFilter"
+      responses:
+        200:
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PaginatedEnvironmentResponse"
+  /customfield/environment/selectable:
+    x-apw-filter: cloud
+    get:
+      tags:
+        - Custom Field
+      summary: Get available environment options for a customfield in a project
+      description: |
+        Combine any pre-defined <b>search parameters listed below</b>
+        and pass them to url as query parameters. <br/><br/>Other parameters you can
+        use:<br/>* parameters with no value to perform a <b>free text search</b> on
+        all information of your environments (ex: <i>?Staging&eCommerce&RedHat</i>)<br/>*
+        name of an <b>attribute as query parameter</b> (ex: <i>?OS=RedHat&database=Postgresql</i>)<br/><br/>Note
+        that you can send the same parameter <b>multiple times</b> with different
+        values (ex: <i>?applicationName=eCommerce&applicationName=PaymentService</i>).
+        It will return environments matching at least one of the values
+      x-apw-operation-id: selectable
+      x-apw-context-only: true
+      parameters:
+        - name: projectKey
+          in: query
+          description: TEST
+          schema:
+            type: string
+        - name: projectId
+          in: query
+          description: "10101"
+          schema:
+            type: integer
+            format: int64
+        - name: customfieldKey
+          in: query
+          description: apwide-environment-detected-in
+          schema:
+            type: string
+        - name: customfieldName
+          in: query
+          description: Detected in
+          schema:
+            type: string
+        - name: excludedEnvironmentIds
+          in: query
+          description: Comma separated list of environment ids to exclude from result
+          schema:
+            type: string
+        - name: excludedOptionIds
+          in: query
+          description: Comma separated list of option ids to exclude from result
+          schema:
+            type: string
+        - name: environmentId
+          in: query
+          description: "Environment id (ex: 23)"
+          explode: true
+          schema:
+            type: array
+            items:
+              type: integer
+              format: int64
+        - name: environmentName
+          in: query
+          description: "Environment name (ex: eCommerce Dev 1)"
+          explode: true
+          schema:
+            type: array
+            items:
+              type: string
+        - name: applicationName
+          in: query
+          description: "Application name (ex: eCommerce)"
+          explode: true
+          schema:
+            type: array
+            items:
+              type: string
+        - name: applicationId
+          in: query
+          description: "Application id (ex: 23)"
+          explode: true
+          schema:
+            type: array
+            items:
+              type: integer
+              format: int64
+        - name: categoryName
+          in: query
+          description: 'Category Name (ex: Staging)'
+          explode: true
+          schema:
+            type: array
+            items:
+              type: string
+        - name: categoryId
+          in: query
+          description: "Category id (ex: 2)"
+          explode: true
+          schema:
+            type: array
+            items:
+              type: integer
+              format: int64
+        - name: statusName
+          in: query
+          description: "Status Name (ex: Slow)"
+          explode: true
+          schema:
+            type: array
+            items:
+              type: string
+        - name: statusId
+          in: query
+          description: "Status id (ex: 3)"
+          explode: true
+          schema:
+            type: array
+            items:
+              type: integer
+              format: int64
+        - name: permissionSchemeName
+          in: query
+          description: "Permission scheme name (ex: Default Environment Permission Scheme)"
+          explode: true
+          schema:
+            type: array
+            items:
+              type: string
+        - name: permissionSchemeId
+          in: query
+          description: "Permission scheme id (ex: 1)"
+          explode: true
+          schema:
+            type: array
+            items:
+              type: integer
+              format: int64
+        - name: _limit
+          in: query
+          description: "Max number of results (0 = unlimited)"
+          schema:
+            type: integer
+            default: 0
+            format: int64
+        - name: _offset
+          in: query
+          description: "First result to return (ex: 10)"
+          schema:
+            type: integer
+            default: 0
+            format: int64
+        - name: _sortOrder
+          in: query
+          description: "Sort order"
+          schema:
+            type: string
+            default: asc
+            example: asc, desc
+        - name: _sortBy
+          in: query
+          description: "Sort by"
+          schema:
+            type: string
+            default: application_and_category
+            example: application, category, deployment, status
+        - name: _expand
+          in: query
+          description: Set it to false for lighter JSON
+          schema:
+            type: boolean
+            default: true
+      responses:
+        200:
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/OptionReferenceResourceResponse"
+  /customfield/environment/selected:
+    x-apw-filter: cloud
+    get:
+      tags:
+        - Custom Field
+      summary: Get custom field selected environments for an issue
+      description: ''
+      x-apw-operation-id: selected
+      parameters:
+        - name: issueKey
+          in: query
+          schema:
+            type: string
+            example: TEST-10200
+        - name: customfieldKey
+          in: query
+          schema:
+            type: string
+            example: apwide-environment-detected-in
+        - name: customfieldName
+          in: query
+          schema:
+            type: string
+            example: Detected in
+      responses:
+        200:
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/EnvironmentReferenceResponse"
+  /watcher/statistics:
+    get:
+      tags:
+        - Watcher
+      summary: Count number of watchers per environment
+      description: ''
+      x-apw-operation-id: getStatistics
+      responses:
+        200:
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/WatcherStatistics"
+  /watcher/user:
+    get:
+      tags:
+        - Watcher
+      summary: Get environment watcher
+      description: ''
+      x-apw-operation-id: getUserWatcher
+      parameters:
+        - name: environmentId
+          in: query
+          required: true
+          schema:
+            type: integer
+            format: int32
+            example: 1
+        - name: userName
+          in: query
+          schema:
+            type: string
+            example: admin
+        - name: userKey
+          in: query
+          schema:
+            type: string
+            example: admin
+      responses:
+        200:
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/EnvironmentWatcher"
+    post:
+      tags:
+        - Watcher
+      summary: Create new environment watcher
+      description: ''
+      x-apw-operation-id: addUserWatcher
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/EnvironmentWatcher"
+      parameters:
+        - name: environmentId
+          in: query
+          required: true
+          schema:
+            type: integer
+            format: int32
+            example: 1
+        - name: userName
+          in: query
+          schema:
+            type: string
+            example: admin
+        - name: userKey
+          in: query
+          schema:
+            type: string
+            example: admin
+      responses:
+        200:
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/EnvironmentWatcher"
+    put:
+      tags:
+        - Watcher
+      summary: Update environment watcher
+      description: ''
+      x-apw-operation-id: updateUserWatcher
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/EnvironmentWatcher"
+      parameters:
+        - name: environmentId
+          in: query
+          required: true
+          schema:
+            type: integer
+            format: int32
+            example: 1
+        - name: userName
+          in: query
+          schema:
+            type: string
+            example: admin
+        - name: userKey
+          in: query
+          schema:
+            type: string
+            example: admin
+      responses:
+        200:
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/EnvironmentWatcher"
+    delete:
+      tags:
+        - Watcher
+      summary: Remove environment watcher
+      description: ''
+      x-apw-operation-id: removeUserWatcher
+      parameters:
+        - name: environmentId
+          in: query
+          required: true
+          schema:
+            type: integer
+            format: int32
+            example: 1
+        - name: userName
+          in: query
+          schema:
+            type: string
+            example: admin
+        - name: userKey
+          in: query
+          schema:
+            type: string
+            example: admin
+      responses:
+        default:
+          description: successful operation
+
+security:
+  - BasicAuth: []
+  - BearerAuth: []
+
+components:
+  securitySchemes:
+    BasicAuth:
+      x-apw-filter: server
+      type: http
+      scheme: basic
+      description: Basic authentication (base64(user:password)).
+      name: Basic Authentication
+    BearerAuth:
+      x-apw-filter: cloud
+      type: http
+      scheme: bearer
+      description: Bearer token added as Authorization header prefixed with bearer.
+      name: Bearer Authentication
+  responses:
+    404:
+      description: Resource has not been found.
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorCollection"
+    400:
+      description: Request was invalid, reason should be provided in response body.
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorCollection"
+
+  schemas:
+    ErrorCollection:
+      type: object
+      properties:
+        errorMessages:
+          type: array
+          items:
+            type: string
+        errors:
+          type: object
+          additionalProperties:
+            type: string
+        status:
+          type: integer
+          format: int32
+    ApplicationRequest:
+      type: object
+      required:
+        - name
+      properties:
+        name:
+          type: string
+          example: eCommerce
+        versionPrefix:
+          type: string
+          example: ECOM
+        mappedProjectId:
+          type: integer
+          format: int64
+          example: 10
+        createNewVersion:
+          type: boolean
+        deploymentConfiguration:
+          $ref: "#/components/schemas/DeploymentConfiguration"
+        deploymentAttributes:
+          type: array
+          items:
+            $ref: "#/components/schemas/Attribute"
+        #            $ref: "#/components/schemas/NamedReference"
+        tierType:
+          $ref: "#/components/schemas/TierType"
+        parents:
+          type: array
+          items:
+            $ref: "#/components/schemas/NamedReference"
+        tiers:
+          type: array
+          items:
+            $ref: "#/components/schemas/NamedReference"
+        incomingDependencies:
+          type: array
+          items:
+            $ref: "#/components/schemas/NamedReference"
+        outgoingDependencies:
+          type: array
+          items:
+            $ref: "#/components/schemas/NamedReference"
+    ApplicationResponse:
+      type: object
+      required:
+        - id
+        - name
+      properties:
+        id:
+          type: integer
+          format: int32
+          example: 1
+        name:
+          type: string
+          example: eCommerce
+        versionPrefix:
+          type: string
+          example: ECOM
+        mappedProjectId:
+          type: integer
+          format: int64
+          example: 10
+        createNewVersion:
+          type: boolean
+        deploymentConfiguration:
+          $ref: "#/components/schemas/DeploymentConfiguration"
+        deploymentAttributes:
+          type: array
+          items:
+            $ref: "#/components/schemas/Attribute"
+        tierType:
+          $ref: "#/components/schemas/TierType"
+        parents:
+          type: array
+          items:
+            $ref: "#/components/schemas/NamedReference"
+        tiers:
+          type: array
+          items:
+            $ref: "#/components/schemas/NamedReference"
+        incomingDependencies:
+          type: array
+          items:
+            $ref: "#/components/schemas/NamedReference"
+        outgoingDependencies:
+          type: array
+          items:
+            $ref: "#/components/schemas/NamedReference"
+    TierType:
+      type: string
+      example: STANDALONE
+      enum:
+        - STANDALONE
+        - TIER
+    Attribute:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int32
+        key:
+          type: string
+        type:
+          type: string
+        secured:
+          type: boolean
+        createdBy:
+          type: string
+        createdOn:
+          type: integer
+          x-apw-epoch-date: true
+        modifiedBy:
+          type: string
+        modifiedOn:
+          type: integer
+          x-apw-epoch-date: true
+    AttributeValue:
+      type: object
+      example: |-
+        { "Owner": "John" }
+      properties:
+        name:
+          type: string
+        value:
+          type: string
+    DeploymentResponse:
+      type: object
+      required:
+        - applicationId
+        - applicationName
+        - categoryId
+        - categoryName
+        - deployedTime
+        - deployer
+        - deploymentId
+        - environmentId
+        - id
+      properties:
+        deploymentId:
+          type: integer
+          format: int32
+          example: 1
+          readOnly: true
+        id:
+          type: integer
+          format: int32
+          example: 1
+          readOnly: true
+        environmentId:
+          type: integer
+          format: int32
+          example: 1
+          readOnly: true
+        versionName:
+          type: string
+          example: ECOM 1.2.4
+        versionId:
+          type: string
+          example: '101002'
+        deployer:
+          type: string
+          example: admin
+          readOnly: true
+        deployedTime:
+          type: integer
+          x-apw-epoch-date: true
+          example: 1522011409588
+          readOnly: true
+        categoryId:
+          type: integer
+          format: int32
+          example: 1
+          readOnly: true
+        categoryName:
+          type: string
+          example: Staging
+          readOnly: true
+        applicationId:
+          type: integer
+          format: int32
+          example: 1
+          readOnly: true
+        applicationName:
+          type: string
+          example: eCommerce
+          readOnly: true
+        endTime:
+          type: integer
+          x-apw-epoch-date: true
+          example: 1522011417783
+          readOnly: true
+        duration:
+          type: integer
+          format: int64
+          example: 8195
+          readOnly: true
+        buildNumber:
+          type: string
+          example: '2839948'
+        description:
+          type: string
+          example: Release candidate for Summer 2020
+        orderedAttributes:
+          type: array
+          items:
+            $ref: "#/components/schemas/AttributeValue"
+        issueKeys:
+          type: array
+          items:
+            type: string
+        attributes:
+          additionalProperties:
+            type: string
+    DeploymentRequest:
+      type: object
+      required:
+        - applicationId
+        - applicationName
+        - categoryId
+        - categoryName
+        - deployedTime
+        - deployer
+        - deploymentId
+        - environmentId
+        - id
+      properties:
+        deploymentId:
+          type: integer
+          format: int32
+          example: 1
+          readOnly: true
+        id:
+          type: integer
+          format: int32
+          example: 1
+          readOnly: true
+        versionName:
+          type: string
+          example: ECOM 1.2.4
+        versionId:
+          type: string
+          example: '101002'
+        buildNumber:
+          type: string
+          example: '2839948'
+        description:
+          type: string
+          example: Release candidate for Summer 2020
+        issueKeys:
+          type: array
+          items:
+            type: string
+        attributes:
+          additionalProperties:
+            type: string
+    DeploymentConfiguration:
+      type: object
+      properties:
+        showBuildNumber:
+          type: boolean
+        showDescription:
+          type: boolean
+        preventDeploymentMerge:
+          type: boolean
+        readonlyDeployedIssues:
+          type: boolean
+    NamedReference:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int32
+        name:
+          type: string
+    CreatableNamedReference:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int32
+        name:
+          type: string
+        autoCreate:
+          type: boolean
+          description: should we create reference if not existing
+    EnvironmentCategory:
+      type: object
+      required:
+        - id
+        - name
+      properties:
+        id:
+          type: integer
+          format: int32
+          example: 1
+        name:
+          type: string
+          example: Staging
+        order:
+          type: integer
+          format: int32
+          example: 10
+        type:
+          $ref: "#/components/schemas/EnvironmentCategoryType"
+    EnvironmentCategoryType:
+      type: string
+      example: STAGING
+      enum:
+        - DEVELOPMENT
+        - TESTING
+        - STAGING
+        - PRODUCTION
+    EnvironmentStatus:
+      type: object
+      required:
+        - id
+        - name
+      properties:
+        id:
+          type: integer
+          format: int32
+          example: 1
+        name:
+          type: string
+          example: Available
+        description:
+          type: string
+          example: Environment is available
+        # TODO enum ?
+        color:
+          type: string
+          example: GREEN
+        order:
+          type: integer
+          format: int32
+          example: 10
+    ScopedStatusChangeRequest:
+      type: object
+      properties:
+        scope:
+          $ref: "#/components/schemas/EnvironmentsScope"
+        status:
+          $ref: "#/components/schemas/NamedReference"
+        ignoredStatuses:
+          type: array
+          items:
+            $ref: "#/components/schemas/NamedReference"
+        statusMapping:
+          type: object
+          additionalProperties:
+            $ref: "#/components/schemas/NamedReference"
+    EnvironmentStatusChangeRequest:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int32
+          example: 1
+        name:
+          type: string
+          example: Available
+      xml:
+        name: statusChangeRequest
+    StatusChange:
+      type: object
+      required:
+        - applicationId
+        - applicationName
+        - categoryId
+        - categoryName
+        - changedBy
+        - changedOn
+        - id
+        - statusName
+      properties:
+        id:
+          type: integer
+          format: int32
+          example: 1
+          readOnly: true
+        categoryId:
+          type: integer
+          format: int32
+          example: 1
+          readOnly: true
+        categoryName:
+          type: string
+          example: Staging
+          readOnly: true
+        applicationId:
+          type: integer
+          format: int32
+          example: 1
+          readOnly: true
+        applicationName:
+          type: string
+          example: eCommerce
+          readOnly: true
+        statusName:
+          type: string
+          example: Available
+          readOnly: true
+        status:
+          $ref: "#/components/schemas/EnvironmentStatus"
+        changedBy:
+          type: string
+          example: admin
+          readOnly: true
+        changedOn:
+          type: integer
+          format: int64
+          x-apw-epoch-date: true
+          example: 1522097356939
+          readOnly: true
+        endTime:
+          type: integer
+          format: int64
+          x-apw-epoch-date: true
+          example: 1522097356910
+          description: endTime is not defined if status is the current one
+          readOnly: true
+        duration:
+          type: integer
+          format: int64
+          example: 3600000
+          description: duration in ms. Only present if endTime is set
+          readOnly: true
+      xml:
+        name: change-status
+    StatusChangeResult:
+      type: object
+      properties:
+        errors:
+          $ref: "#/components/schemas/ErrorCollection"
+        type:
+          $ref: "#/components/schemas/StatusChangeResultType"
+        previousStatus:
+          $ref: "#/components/schemas/NamedReference"
+        currentStatus:
+          $ref: "#/components/schemas/NamedReference"
+    StatusChangeResultType:
+      type: string
+      enum:
+        - IGNORED
+        - CHANGED
+        - FAILED
+        - NOT_MODIFIED
+    StatusChangesResponse:
+      type: object
+      properties:
+        requestedStatus:
+          $ref: "#/components/schemas/NamedReference"
+        environments:
+          type: array
+          items:
+            $ref: "#/components/schemas/EnvironmentStatusChange"
+    EnvironmentStatusChange:
+      type: object
+      properties:
+        environment:
+          $ref: "#/components/schemas/NamedReference"
+        result:
+          $ref: "#/components/schemas/StatusChangeResult"
+    EnvironmentsScope:
+      type: object
+      properties:
+        criteria:
+          type: array
+          items:
+            $ref: "#/components/schemas/EnvironmentSearchCriterion"
+    IssueDeployedRequest:
+      type: object
+      properties:
+        issueKey:
+          type: string
+        scope:
+          $ref: "#/components/schemas/EnvironmentsScope"
+        buildNumber:
+          type: string
+        versionName:
+          type: string
+        noEmailNotification:
+          type: boolean
+    EnvironmentSearchCriterion:
+      type: object
+      properties:
+        name:
+          type: string
+        values:
+          type: array
+          items:
+            type: string
+    EnvironmentPermissionScheme:
+      type: object
+      required:
+        - description
+        - global
+        - id
+        - name
+        - roles
+      properties:
+        id:
+          type: integer
+          format: int32
+          example: 1
+        name:
+          type: string
+          example: Default Environment Permission Scheme
+        description:
+          type: string
+          example: Default Environment Permission Scheme
+        roles:
+          type: array
+          example: "['Admin', 'Anonymous', 'Mosaic Team Members']"
+          items:
+            type: string
+        global:
+          type: boolean
+          readOnly: true
+    EnvironmentRequest:
+      type: object
+      required:
+        - application
+        - category
+        - name
+      properties:
+        application:
+          $ref: "#/components/schemas/NamedReference"
+        category:
+          $ref: "#/components/schemas/NamedReference"
+        name:
+          type: string
+        description:
+          type: string
+        environmentPermissionScheme:
+          $ref: "#/components/schemas/NamedReference"
+        url:
+          type: string
+          example: https://ecom-staging-my-company.com/welcome
+        parent:
+          $ref: "#/components/schemas/NamedReference"
+        tiers:
+          type: array
+          items:
+            $ref: "#/components/schemas/NamedReference"
+        incomingDependencies:
+          type: array
+          items:
+            $ref: "#/components/schemas/NamedReference"
+        outgoingDependencies:
+          type: array
+          items:
+            $ref: "#/components/schemas/NamedReference"
+        attributes:
+          type: object
+          additionalProperties:
+            type: string
+        attributesToDelete:
+          type: array
+          items:
+            type: string
+    EnvironmentResponse:
+      type: object
+      required:
+        - application
+        - category
+        - name
+      properties:
+        id:
+          type: integer
+          format: int32
+          example: 1
+          readOnly: true
+        application:
+          $ref: "#/components/schemas/ApplicationResponse"
+        category:
+          $ref: "#/components/schemas/EnvironmentCategory"
+        name:
+          type: string
+        description:
+          type: string
+        environmentPermissionScheme:
+          $ref: "#/components/schemas/EnvironmentPermissionScheme"
+        status:
+          $ref: "#/components/schemas/EnvironmentStatus"
+        url:
+          type: string
+          example: https://ecom-staging-my-company.com/welcome
+        deployment:
+          $ref: "#/components/schemas/DeploymentResponse"
+        watched:
+          type: boolean
+          example: true
+          readOnly: true
+        parent:
+          $ref: "#/components/schemas/NamedReference"
+        tiers:
+          type: array
+          items:
+            $ref: "#/components/schemas/NamedReference"
+        incomingDependencies:
+          type: array
+          items:
+            $ref: "#/components/schemas/NamedReference"
+        outgoingDependencies:
+          type: array
+          items:
+            $ref: "#/components/schemas/NamedReference"
+        attributes:
+          type: object
+          additionalProperties:
+            type: string
+    EnvironmentFilter:
+      type: object
+      properties:
+        criteria:
+          type: array
+          items:
+            $ref: "#/components/schemas/EnvironmentSearchCriterion"
+        sortOrder:
+          type: string
+        sortBy:
+          type: string
+        limit:
+          type: integer
+          format: int32
+        offset:
+          type: integer
+          format: int32
+        expand:
+          type: boolean
+    PaginatedEnvironmentResponse:
+      type: object
+      required:
+        - count
+        - offset
+      properties:
+        count:
+          type: integer
+          format: int64
+        limit:
+          type: integer
+          format: int32
+        offset:
+          type: integer
+          format: int64
+        environments:
+          type: array
+          items:
+            $ref: "#/components/schemas/EnvironmentResponse"
+    EnvironmentReference:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int32
+        name:
+          type: string
+        application:
+          $ref: "#/components/schemas/NamedReference"
+        category:
+          $ref: "#/components/schemas/NamedReference"
+    EnvironmentReferenceResponse:
+      type: object
+      properties:
+        items:
+          type: array
+          items:
+            $ref: "#/components/schemas/EnvironmentReference"
+    OptionReferenceResource:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+        name:
+          type: string
+    OptionReferenceResourceResponse:
+      type: object
+      properties:
+        items:
+          type: array
+          items:
+            $ref: "#/components/schemas/OptionReferenceResource"
+    WatcherStatistics:
+      type: object
+      properties:
+        dumb:
+          type: string
+    EnvironmentWatcher:
+      type: object
+      required:
+        - environmentId
+        - watchDeployedVersion
+        - watchEnvironmentChanged
+        - watchIssueAdded
+        - watchIssueRemoved
+        - watchStatus
+      properties:
+        id:
+          type: integer
+          format: int32
+          example: 1
+          readOnly: true
+        userKey:
+          type: string
+        userName:
+          type: string
+          example: admin
+        environmentId:
+          type: integer
+          format: int32
+          example: 1
+        watchEnvironmentChanged:
+          type: boolean
+          example: true
+        watchDeployedVersion:
+          type: boolean
+          example: true
+        watchStatus:
+          type: boolean
+          example: true
+        watchIssueAdded:
+          type: boolean
+          example: true
+        watchIssueRemoved:
+          type: boolean
+          example: true
+    VersionInfoRequest:
+      type: object
+      required:
+        - versionName
+      properties:
+        application:
+          $ref: '#/components/schemas/NamedReference'
+        versionName:
+          type: string
+          example: ECOM-2.1
+        versionDescription:
+          type: string
+        startDate:
+          type: string
+          description: ISO-8601 date time format
+          example: "2023-08-12 12:00:00Z"
+        releaseDate:
+          type: string
+          description: ISO-8601 date time format
+          example: "2023-09-24 16:00:00Z"
+        released:
+          type: boolean
+        issues:
+          $ref: '#/components/schemas/VersionIssues'
+    EnvironmentInfoRequest:
+      type: object
+      required:
+        - environment
+      properties:
+        environmentSelector:
+          $ref: '#/components/schemas/EnvironmentInfoSelector'
+        deployment:
+          $ref: '#/components/schemas/DeploymentInfo'
+        environment:
+          $ref: '#/components/schemas/EnvironmentInfo'
+        status:
+          $ref: '#/components/schemas/NamedReference'
+    DeploymentInfo:
+      type: object
+      properties:
+        versionName:
+          type: string
+          example: ECOM 1.2.4
+        deployedDate:
+          type: string
+          description: ISO-8601 date time format
+          example: "2023-09-24 16:00:00Z"
+        versionId:
+          type: string
+          example: '101002'
+        buildNumber:
+          type: string
+          example: '2839948'
+        description:
+          type: string
+          example: Release candidate for Summer 2020
+        attributes:
+          additionalProperties:
+            type: string
+        issues:
+          $ref: '#/components/schemas/DeployedIssues'
+    EnvironmentInfoSelector:
+      type: object
+      properties:
+        environment:
+          $ref: '#/components/schemas/CreatableNamedReference'
+        application:
+          $ref: '#/components/schemas/CreatableNamedReference'
+        category:
+          $ref: '#/components/schemas/CreatableNamedReference'
+    EnvironmentInfo:
+      type: object
+      properties:
+        name:
+          type: string
+        url:
+          type: string
+        attributes:
+          additionalProperties:
+            type: string
+    EnvironmentInfoResponse:
+      type: object
+      required:
+        - environment
+      properties:
+        environment:
+          $ref: '#/components/schemas/NamedReference'
+        deployment:
+          $ref: '#/components/schemas/DeploymentDetail'
+        status:
+          $ref: '#/components/schemas/NamedReference'
+    DeploymentDetail:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int32
+          example: 1
+          readOnly: true
+        environmentId:
+          type: integer
+          format: int32
+          example: 1
+          readOnly: true
+        versionName:
+          type: string
+          example: ECOM 1.2.4
+        versionId:
+          type: string
+          example: '101002'
+        deployer:
+          type: string
+          example: admin
+          readOnly: true
+        deployedOn:
+          type: string
+          description: ISO-8601 date time format
+          example: "2023-09-24 16:00:00Z"
+        buildNumber:
+          type: string
+          example: '2839948'
+        description:
+          type: string
+          example: Release candidate for Summer 2020
+        issueKeys:
+          type: array
+          items:
+            type: string
+        attributes:
+          additionalProperties:
+            type: string
+    DefaultBoolean:
+      type: string
+      enum:
+        - "yes"
+        - "no"
+        - "default"
+    DeployedIssues:
+      type: object
+      properties:
+        addDoneIssuesFixedInVersion:
+          type: boolean
+          default: false
+        issueKeys:
+          type: array
+          items:
+            type: string
+        jql:
+          type: string
+        noFixVersionUpdate:
+          type: boolean
+          default: false
+        sendJiraNotification:
+          type: boolean
+          default: false
+    VersionIssues:
+      type: object
+      properties:
+        issueKeys:
+          type: array
+          items:
+            type: string
+        jql:
+          type: string
+        sendJiraNotification:
+          type: boolean
+          default: false
+    VersionInfo:
+      type: object
+      required:
+        - versionId
+        - versionName
+      properties:
+        versionId:
+          type: integer
+          format: int64
+          example: 10200
+        versionName:
+          type: string
+          example: ECOM-2.1
+        versionDescription:
+          type: string
+        startDate:
+          type: string
+          example: "2023-08-12 12:00:00"
+          # ISO format ?
+        releaseDate:
+          type: string
+          example: "2023-09-24 16:00:00"
+        released:
+          type: boolean
+        fixedIssues:
+          type: array
+          items:
+            type: string
+    VersionInfoResponse:
+      type: object
+      required:
+        - versionId
+        - versionName
+      properties:
+        versions:
+          type: array
+          items:
+            $ref: '#/components/schemas/VersionInfo'
+          format: int64
+          example: 10200

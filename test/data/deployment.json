@@ -1,0 +1,466 @@
+{
+  "apiVersion": "apps/v1",
+  "kind": "Deployment",
+  "metadata": {
+    "annotations": {
+      "deployment.kubernetes.io/revision": "26"
+    },
+    "creationTimestamp": "2023-12-21T20:41:34Z",
+    "generation": 26,
+    "labels": {
+      "app": "golive-api",
+      "apwide.net/app": "golive-api"
+    },
+    "name": "golive-api",
+    "namespace": "golive-dev",
+    "resourceVersion": "27111562903",
+    "uid": "3e842b79-ffc2-4a17-83fa-503900c65f5f"
+  },
+  "spec": {
+    "progressDeadlineSeconds": 600,
+    "replicas": 1,
+    "revisionHistoryLimit": 1,
+    "selector": {
+      "matchLabels": {
+        "app": "golive-api"
+      }
+    },
+    "strategy": {
+      "rollingUpdate": {
+        "maxSurge": 1,
+        "maxUnavailable": 0
+      },
+      "type": "RollingUpdate"
+    },
+    "template": {
+      "metadata": {
+        "annotations": {
+          "fluentbit.io/parser": "golive-boot",
+          "kubectl.kubernetes.io/restartedAt": "2024-01-16T06:27:39Z"
+        },
+        "creationTimestamp": null,
+        "labels": {
+          "app": "golive-api",
+          "apwide.net/app": "golive-api"
+        },
+        "namespace": "golive-dev"
+      },
+      "spec": {
+        "automountServiceAccountToken": true,
+        "containers": [
+          {
+            "env": [
+              {
+                "name": "ADDON_BASE-URL",
+                "value": "https://golive.dev.apwide.net"
+              },
+              {
+                "name": "APWIDE_AUTOMATION_CLEAN_CRON",
+                "value": "-"
+              },
+              {
+                "name": "APWIDE_DEPLOYMENT-MODE",
+                "value": "true"
+              },
+              {
+                "name": "APWIDE_FEATURE_ACTIVATIONS_calendarICSExportFeature",
+                "value": ".*"
+              },
+              {
+                "name": "APWIDE_FEATURE_ACTIVATIONS_migration",
+                "value": ".*"
+              },
+              {
+                "name": "APWIDE_FEATURE_ACTIVATIONS_noTracking",
+                "value": ".*"
+              },
+              {
+                "name": "APWIDE_JIRA_CALL-TIMEOUT",
+                "value": "30"
+              },
+              {
+                "name": "APWIDE_JIRA_READ-TIMEOUT",
+                "value": "20"
+              },
+              {
+                "name": "APWIDE_JIRA_WRITE-TIMEOUT",
+                "value": "10"
+              },
+              {
+                "name": "APWIDE_MAIL_ENABLED",
+                "value": "true"
+              },
+              {
+                "name": "APWIDE_PROVISIONING_DATASOURCE_URL",
+                "value": "jdbc:postgresql://postgresql.database.cloud.ovh.net:20184/golive_dev?sslmode=verify-full\u0026sslrootcert=/app/root_ca.crt"
+              },
+              {
+                "name": "APWIDE_PROVISIONING_SHARED_DATASOURCE_URL",
+                "value": "jdbc:postgresql://postgresql.database.cloud.ovh.net:20184/golive_dev?sslmode=verify-full\u0026sslrootcert=/app/root_ca.crt\u0026currentSchema=api"
+              },
+              {
+                "name": "APWIDE_SCHEDULE_URL",
+                "value": "http://job-executor"
+              },
+              {
+                "name": "APWIDE_SCHEDULING_ENABLED",
+                "value": "false"
+              },
+              {
+                "name": "APWIDE_TRACKING_HOST",
+                "value": "https://ph.stg.apwide.net"
+              },
+              {
+                "name": "APWIDE_TRACKING_TOKEN",
+                "value": "phc_XXXX"
+              },
+              {
+                "name": "LOGGING_LEVEL_COM_APWIDE",
+                "value": "DEBUG"
+              },
+              {
+                "name": "SERVER_PORT",
+                "value": "8080"
+              },
+              {
+                "name": "SPRING_DATASOURCE_URL",
+                "value": "jdbc:postgresql://postgresql.database.cloud.ovh.net:20184/golive_dev?sslmode=verify-full\u0026sslrootcert=/app/root_ca.crt"
+              },
+              {
+                "name": "SPRING_FLYWAY_ENABLED",
+                "value": "true"
+              },
+              {
+                "name": "SPRING_MAIL_HOST",
+                "value": "smtp-int2.apwide.net"
+              },
+              {
+                "name": "SPRING_PROFILES_ACTIVE",
+                "value": "production,golive"
+              },
+              {
+                "name": "APWIDE_ADMIN_USERNAME",
+                "valueFrom": {
+                  "secretKeyRef": {
+                    "key": "username",
+                    "name": "golive-host-admin-api-credentials",
+                    "optional": false
+                  }
+                }
+              },
+              {
+                "name": "APWIDE_ADMIN_PASSWORD",
+                "valueFrom": {
+                  "secretKeyRef": {
+                    "key": "password",
+                    "name": "golive-host-admin-api-credentials",
+                    "optional": false
+                  }
+                }
+              },
+              {
+                "name": "APWIDE_PROVISIONING_DATASOURCE_USERNAME",
+                "valueFrom": {
+                  "secretKeyRef": {
+                    "key": "username",
+                    "name": "golive-db-api-admin",
+                    "optional": false
+                  }
+                }
+              },
+              {
+                "name": "APWIDE_PROVISIONING_DATASOURCE_PASSWORD",
+                "valueFrom": {
+                  "secretKeyRef": {
+                    "key": "password",
+                    "name": "golive-db-api-admin",
+                    "optional": false
+                  }
+                }
+              },
+              {
+                "name": "SPRING_DATASOURCE_USERNAME",
+                "valueFrom": {
+                  "secretKeyRef": {
+                    "key": "username",
+                    "name": "golive-db-api",
+                    "optional": false
+                  }
+                }
+              },
+              {
+                "name": "SPRING_DATASOURCE_PASSWORD",
+                "valueFrom": {
+                  "secretKeyRef": {
+                    "key": "password",
+                    "name": "golive-db-api",
+                    "optional": false
+                  }
+                }
+              },
+              {
+                "name": "SPRING_MAIL_USERNAME",
+                "valueFrom": {
+                  "secretKeyRef": {
+                    "key": "username",
+                    "name": "golive-mail-account",
+                    "optional": false
+                  }
+                }
+              },
+              {
+                "name": "SPRING_MAIL_PASSWORD",
+                "valueFrom": {
+                  "secretKeyRef": {
+                    "key": "password",
+                    "name": "golive-mail-account",
+                    "optional": false
+                  }
+                }
+              },
+              {
+                "name": "APWIDE_MAIL_FROM",
+                "valueFrom": {
+                  "secretKeyRef": {
+                    "key": "username",
+                    "name": "golive-mail-account",
+                    "optional": false
+                  }
+                }
+              }
+            ],
+            "image": "docker.apwide.com/golive-api:latest",
+            "imagePullPolicy": "Always",
+            "livenessProbe": {
+              "failureThreshold": 10,
+              "httpGet": {
+                "path": "/actuator/health/liveness",
+                "port": "http",
+                "scheme": "HTTP"
+              },
+              "initialDelaySeconds": 120,
+              "periodSeconds": 10,
+              "successThreshold": 1,
+              "timeoutSeconds": 15
+            },
+            "name": "api",
+            "ports": [
+              {
+                "containerPort": 8080,
+                "name": "http",
+                "protocol": "TCP"
+              }
+            ],
+            "readinessProbe": {
+              "failureThreshold": 7,
+              "httpGet": {
+                "path": "/actuator/health/readiness",
+                "port": "http",
+                "scheme": "HTTP"
+              },
+              "periodSeconds": 10,
+              "successThreshold": 1,
+              "timeoutSeconds": 10
+            },
+            "resources": {},
+            "startupProbe": {
+              "failureThreshold": 25,
+              "httpGet": {
+                "path": "/actuator/health/startup",
+                "port": "http",
+                "scheme": "HTTP"
+              },
+              "initialDelaySeconds": 100,
+              "periodSeconds": 20,
+              "successThreshold": 1,
+              "timeoutSeconds": 140
+            },
+            "terminationMessagePath": "/dev/termination-log",
+            "terminationMessagePolicy": "File",
+            "volumeMounts": [
+              {
+                "mountPath": "/app/token",
+                "mountPropagation": "None",
+                "name": "token-public-key",
+                "readOnly": true
+              },
+              {
+                "mountPath": "/app/root_ca.crt",
+                "mountPropagation": "None",
+                "name": "golive-database-ssl-root-ca-cert",
+                "readOnly": true,
+                "subPath": "root_ca.crt"
+              }
+            ]
+          }
+        ],
+        "dnsPolicy": "ClusterFirst",
+        "enableServiceLinks": true,
+        "imagePullSecrets": [
+          {
+            "name": "docker-apwide-secret"
+          }
+        ],
+        "initContainers": [
+          {
+            "command": [
+              "sh",
+              "/docker-entrypoint-initdb.d/init_db.sh"
+            ],
+            "env": [
+              {
+                "name": "POSTGRES_DB",
+                "value": "golive_dev"
+              },
+              {
+                "name": "POSTGRES_HOST",
+                "value": "postgresql-YYYY.database.cloud.ovh.net"
+              },
+              {
+                "name": "POSTGRES_PORT_NUMBER",
+                "value": "12324"
+              },
+              {
+                "name": "POSTGRES_USER",
+                "valueFrom": {
+                  "secretKeyRef": {
+                    "key": "username",
+                    "name": "golive-db-admin",
+                    "optional": false
+                  }
+                }
+              },
+              {
+                "name": "PGPASSWORD",
+                "valueFrom": {
+                  "secretKeyRef": {
+                    "key": "password",
+                    "name": "golive-db-admin",
+                    "optional": false
+                  }
+                }
+              },
+              {
+                "name": "DB_ADMIN_USERNAME",
+                "valueFrom": {
+                  "secretKeyRef": {
+                    "key": "username",
+                    "name": "golive-db-api-admin",
+                    "optional": false
+                  }
+                }
+              },
+              {
+                "name": "DB_ADMIN_PASSWORD",
+                "valueFrom": {
+                  "secretKeyRef": {
+                    "key": "password",
+                    "name": "golive-db-api-admin",
+                    "optional": false
+                  }
+                }
+              },
+              {
+                "name": "DB_USERNAME",
+                "valueFrom": {
+                  "secretKeyRef": {
+                    "key": "username",
+                    "name": "golive-db-api",
+                    "optional": false
+                  }
+                }
+              },
+              {
+                "name": "DB_PASSWORD",
+                "valueFrom": {
+                  "secretKeyRef": {
+                    "key": "password",
+                    "name": "golive-db-api",
+                    "optional": false
+                  }
+                }
+              }
+            ],
+            "image": "bitnami/postgresql:14",
+            "imagePullPolicy": "IfNotPresent",
+            "name": "init",
+            "resources": {},
+            "terminationMessagePath": "/dev/termination-log",
+            "terminationMessagePolicy": "File",
+            "volumeMounts": [
+              {
+                "mountPath": "/docker-entrypoint-initdb.d/init_db.sh",
+                "mountPropagation": "None",
+                "name": "db-init-script",
+                "subPath": "init_db.sh"
+              },
+              {
+                "mountPath": "/app/root_ca.crt",
+                "mountPropagation": "None",
+                "name": "golive-database-ssl-root-ca-cert",
+                "readOnly": true,
+                "subPath": "root_ca.crt"
+              }
+            ]
+          }
+        ],
+        "restartPolicy": "Always",
+        "schedulerName": "default-scheduler",
+        "securityContext": {},
+        "shareProcessNamespace": false,
+        "terminationGracePeriodSeconds": 30,
+        "volumes": [
+          {
+            "name": "token-public-key",
+            "secret": {
+              "defaultMode": 420,
+              "optional": false,
+              "secretName": "golive-token-public-key"
+            }
+          },
+          {
+            "configMap": {
+              "defaultMode": 511,
+              "name": "golive-api-db-init-script",
+              "optional": false
+            },
+            "name": "db-init-script"
+          },
+          {
+            "name": "golive-database-ssl-root-ca-cert",
+            "secret": {
+              "defaultMode": 511,
+              "optional": false,
+              "secretName": "golive-database-ssl-root-ca-cert"
+            }
+          }
+        ]
+      }
+    }
+  },
+  "status": {
+    "availableReplicas": 1,
+    "conditions": [
+      {
+        "lastTransitionTime": "2023-12-22T09:19:11Z",
+        "lastUpdateTime": "2023-12-22T09:19:11Z",
+        "message": "Deployment has minimum availability.",
+        "reason": "MinimumReplicasAvailable",
+        "status": "True",
+        "type": "Available"
+      },
+      {
+        "lastTransitionTime": "2023-12-21T20:41:34Z",
+        "lastUpdateTime": "2024-01-16T06:29:41Z",
+        "message": "ReplicaSet \"golive-api-b6bcd58b9\" has successfully progressed.",
+        "reason": "NewReplicaSetAvailable",
+        "status": "True",
+        "type": "Progressing"
+      }
+    ],
+    "observedGeneration": 26,
+    "readyReplicas": 1,
+    "replicas": 1,
+    "updatedReplicas": 1
+  }
+}

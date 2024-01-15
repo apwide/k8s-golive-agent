@@ -1,0 +1,10 @@
+golive:
+  url: https://jre.apwide.net/api # fallback on cloud prod
+  token: "AAA"
+listeners:
+  - id: golive-dev
+    category:
+      value: "Dev" # id vs name
+    application:
+      label: "app" # id vs name
+    autoCreate: false

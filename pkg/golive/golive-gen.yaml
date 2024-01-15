@@ -1,0 +1,4 @@
+package: golive
+generate: ['types', 'client', 'spec']
+output: api.gen.go
+#output-options:

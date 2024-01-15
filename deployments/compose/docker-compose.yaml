@@ -1,0 +1,11 @@
+services:
+  monitor:
+    image: docker.apwide.com/golive-k8s-monitor:latest
+    network_mode: host
+    environment:
+      GOLIVE_CONFIG: /etc/golive/config-local.yaml
+      GOLIVE_KUBE_CONFIG: /etc/kube/config
+      LOG_LEVEL: Debug
+    volumes:
+      - ./config:/etc/golive
+      - ~/.kube/config:/etc/kube/config
