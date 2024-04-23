@@ -60,3 +60,12 @@ jobs:
             apwide/k8s-golive-monitor:latest
             apwide/k8s-golive-monitor:${{ steps.version.outputs.version != '' && steps.version.outputs.version || format('{0}-{1}', env.today, steps.commit.outputs.short) }}
 
+      - id: docker-overview
+        uses: peter-evans/dockerhub-description@v4
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_PASSWORD }}
+          repository: apwide/k8s-golive-monitor
+          short-description: ${{ github.event.repository.description }}
+          readme-filepath: ./DOCKERHUB.md
+
