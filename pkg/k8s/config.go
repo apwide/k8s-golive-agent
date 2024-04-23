@@ -41,8 +41,9 @@ type AttributeSource struct {
 	FromPath string `yaml:"fromPath"`
 }
 
+// Selector are applied on pod's
 type Selector struct {
-	Name       string            `yaml:"name"`
+	Name       string            `yaml:"name"` // makes no sens on pod
 	Namespace  string            `yaml:"namespace"`
 	LabelQuery string            `yaml:"labelQuery"`
 	Labels     map[string]string `yaml:"labels"`

@@ -1,0 +1,109 @@
+golive:
+  # url is the API base url:
+  # - Golive cloud (default): https://golive.apwide.net/api
+  # - Golive Server: https://[jiraBaseUrl]:[jiraPort]/[jiraContextPath]/rest/apwide/tem/1.1
+  url: https://golive.apwide.net/api
+  # token is the Golive Cloud API Bearer token (https://www.apwide.com/golive/cloud/environments/help/how-to-use-api-tokens)
+  token: ""
+#  # username of Jira user (Golive Server)
+#  username: ""
+#  # password of Jira user (Golive Server)
+#  password: ""
+
+#initialize:
+#  environmentAttributes:
+#    - name: DeploymentMode
+#      type: string
+#      secured: false
+#  deploymentAttributes:
+#    - name: Original
+#      type: string
+#      secured: false
+
+# statusMapping maps K8S pod status to Golive Status
+# Golive statuses can be defined by id and/or by name
+# When no statusMapping is configured, pod statuses are not tracked.
+#statusMapping:
+#  down:
+#    name: Down
+#  up:
+#    name: Up
+#  deploy:
+#    name: Deploy
+#  failed:
+#    name: Down
+
+# listeners defines what pod to watch (using selectors) and how to extract and push information to Golive
+# at least 1 listener is mandatory
+listeners:
+#  # id is the identifier of the listener
+#  - id: golive-api
+#    # autoCreate set if application, category and/or environment must be created into Golive in case they don't exists ?
+#    autoCreate: true
+#    # category configure how to extract Golive category from the listened pod
+#    # when no configuration is provided, the operator search for "golive.apwide.net/cat" label or annotation to extract category to use
+#    category:
+#      # namespace set if we should apply following rules on pod's owner (deployment, statefulset, daemonset) or namespace itself.
+#      # namespace: true
+#      # value is to hard code the category value in this config file
+#      # value: Staging
+#      # label specify which label defines the category of an environment. In case of namespace=true, label will be searched on namespace
+#      # label: my.company.com/category
+#      # annotation can also be used to extract category. Same policy than for labels, search on pod's or if namespace=true, look for annotation from namespace.
+#      # annotation: my.company.com/category
+#    # application configure how to extract Golive application from the listened pod.
+#    # when no configuration is provided, the operator search for "golive.apwide.net/app" label or annotation to extract application to use
+#    # in addition to configuration, the operator is going to fallback on main container image to extract application information.
+#    application:
+#      # namespace set if we should apply following rules on pod's owner (deployment, statefulset, daemonset) or namespace itself.
+#      # namespace: true
+#      # value is to hard code the category value in this config file
+#      # value: Staging
+#      # label specify which label defines the category of an environment. In case of namespace=true, label will be searched on namespace
+#      # label: my.company.com/category
+#      # annotation can also be used to extract category. Same policy than for labels, search on pod's or if namespace=true, look for annotation from namespace.
+#      # annotation: my.company.com/category
+#    # version configure how to extract Golive deployment information from pod
+#    # in addition to configuration, the operator is going to fallback on main container image to extract version information.
+#    version:
+#      # namespace set if we should apply following rules on pod's owner (deployment, statefulset, daemonset) or namespace itself.
+#      # namespace: true
+#      # value is to hard code the category value in this config file
+#      # value: Staging
+#      # label specify which label defines the category of an environment. In case of namespace=true, label will be searched on namespace
+#      # label: my.company.com/category
+#      # annotation can also be used to extract category. Same policy than for labels, search on pod's or if namespace=true, look for annotation from namespace.
+#      # annotation: my.company.com/category
+#      # prefix add a prefix to the version found
+#      # prefix: CLOUD-
+#      # suffix add a suffix to the version found
+#      # suffix: -SNAPSHOT
+#    # attributes configure how to extract environment attributes from pod's owner
+#    # in addition to the configuration, the operator is going to search for annotation "golive.apwide.net/XXXX" where XXXX is the attribute to push
+#    attributes:
+#      # name of the attribute (key)
+#      - name: Cluster
+#      # value is the hard-coded value of the attribute
+#        value: "Local"
+#      - name: "# servers"
+#      # fromPath supports jsonPath expression to extract information from pod's owner resource payload
+#        fromPath: ".spec.replicas"
+#      - name: "Deployment Mode"
+#        fromPath: $.spec.template.spec.containers[0].env[?(@.name=="APWIDE_DEPLOYMENT-MODE")].value
+#      # use templating to extract database name
+#      - name: "Database"
+#        fromPath: $.spec.template.spec.containers[0].env[?(@.name=="SPRING_DATASOURCE_URL")].value
+#      - name: "Base URL"
+#        fromPath: $.spec.template.spec.containers[0].env[?(@.name=="ADDON_BASE-URL")].value
+#    # selectors specific what should be monitored and on which set of pods the previous rules should be applied
+#    selectors:
+#      # namespace supports to restrict monitoring only to this namespace
+#      - namespace: golive-local
+#      # name restrict events only to the given pod name
+#        name: pod-name
+#      # labelQuery supports set-base selectors (#https://kubernetes.io/docs/concepts/overview/working-with-objects/labels/#set-based-requirement)
+#        labelQuery: "apwide.net/app in (golive-api, golive-api-async)"
+#      # labels is a key->value map of labels selector
+#        labels:
+#          my.company.com/monitoring: "k8s-golive-monitor"
+

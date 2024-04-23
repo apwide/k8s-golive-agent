@@ -3,6 +3,7 @@ https://kubernetes.io/docs/concepts/workloads/pods/pod-lifecycle/#pod-conditions
 https://kubebyexample.com/learning-paths/application-development-kubernetes/lesson-1-running-containerized-applications-1
 https://github.com/kubernetes/community/blob/master/contributors/devel/sig-instrumentation/logging.md
 https://github.com/golang-standards/project-layout
+https://medium.com/@xcoulon/kubernetes-configmap-hot-reload-in-action-with-viper-d413128a1c9a
 
 track api calls by kubectl
 ```shell
