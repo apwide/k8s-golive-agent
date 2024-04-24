@@ -1,3 +1,9 @@
+# k8s-golive-monitor
+
+k8s-golive-monitor is a Kubernetes controller designed to manage environment information within your Kubernetes cluster,
+including deployed version tracking and the statuses of deployments, stateful sets, and daemon sets.
+It facilitates the publication of this data to Apwide Golive for Jira.
+
 # What is Apwide Golive for Jira?
 
 Apwide Golive is the game-changing solution for comprehensive test environment management.
@@ -11,54 +17,48 @@ process.
 
 Learn more about Apwide Golive: https://www.apwide.com
 
-# Configuration
+# How it works
 
-Configure is done using a yaml file.
-All of the values can be overriden by environment variables such as:
-```yaml
-golive:
-  offline: true
-```
-can be overridden with:
-```shell
-GOLIVE_OFFLINE=true
-```
+The controller listens for POD events and, based on configured selectors, determines if a POD falls within the scope of monitored resources.
+If so, the controller identifies the resource owning the POD (e.g., Deployment, StatefulSet, DaemonSet) and applies various data extraction strategies
+to compile environment information, subsequently sending it to Golive.
+
+# Examples
+
+Have a look at our [various examples](./examples/README.md) and publish them on your cluster to see how it works
+
+# Configuration
 
 ## Golive
 
-By default, operator runs in offline mode, which logs the data supposed to be sent to Golive. This will help you to first configure what to track and
-how to extract and send data to Golive.
+By default, the controller runs in offline mode, logging the data that would be sent to Golive. This facilitates initial configuration.
 
-
-Most simple configuration is:
+The most basic configuration includes:
 ```yaml
 golive:
   offline: true
 listeners:
   - id: my-listener
 ```
-This configuration will track each pod of each namespace and log json payload that would be sent to Golive if not in offline.
 At least one listener is mandatory.
 
-Offline mode supports logging Golive payload in yaml which is more readable in console logs:
+Offline mode supports logging Golive payload in YAML for improved readability in console logs:
 ```yaml
 golive:
   offline: true
   yaml: true
 ```
 
-When you are ready, you can disable the offline mode and configure Golive API client to push information:
+When ready, offline mode can be disabled, and the Golive API client can be configured to push information.
 
-### Cloud
-For cloud, you only need an [authentication token](https://www.apwide.com/golive/cloud/environments/help/how-to-use-api-tokens)
+**Golive Cloud**: you only need an [authentication token](https://www.apwide.com/golive/cloud/environments/help/how-to-use-api-tokens)
 ```yaml
 golive:
   offline: false
   token: "eyJra[...]xKWvNoQ"
 ```
 
-### Server
-For server, you need to specify the Golive base API url for your given Jira instance and its credentials:
+**Golive Server**: you need to specify the Golive base API url for your given Jira instance and its credentials:
 ```yaml
 golive:
   offline: false
@@ -70,20 +70,22 @@ golive:
 
 ## Listeners
 
-Listeners specify what to track, using *selectors*, what/how to extract environment/deployment data and push them to Golive.
+Listeners use **selectors** to specify what to track and have configurations on how to extract environment/deployment data to push them to Golive.
 
-A listener is composed of:
-* **id**: a unique identifier which helps in the logs to know which config has been used
-* **autoCreate**: a boolean to specific if target(s) (application, category and environment) must be created if not existing into Golive if call should fail.
-* **category**: how to extract/select category.
-* **application**: how to extract/select application.
-* **name**: how to extract/select environment name.
-* **attributes**: what and how to extract environment attribute values
-* **selectors**: pod selectors used to select which event should match this configuration.
+A listener consists of:
+
+* **id**: a unique identifier used in logs to identify the configuration used.
+* **autoCreate**: a boolean specifying if targets (application, category, and environment) must be created if they do not exist in Golive and if the call fails.
+* **category**: how to extract/select the category.
+* **application**: how to extract/select the application.
+* **name**: how to extract/select the environment name.
+* **attributes**: what and how to extract environment attribute values.
+* **version**: how to extract the deployment version name.
+* **selectors**: pod selectors used to determine which events match this configuration.
 
 ## Selectors
 
-Selectors are applied on pod to check if they are monitored or not:
+Selectors are applied to pods to determine if they are monitored:
 ```yaml
 listeners:
   - id: frontend-monitoring
@@ -94,35 +96,29 @@ listeners:
         labelQuery: app in (dev)
 ```
 
-3 type of selectors are currently supported:
-* **namespace**: restrict to pod in the given namespace.
-* **labels**: a map key/value that must matches a pod (logical and).
+Three types of selectors are currently supported:
+
+* **namespace**: restricts to pods in the given namespace.
+* **labels**: a key/value map that must match a pod (logical AND).
 * **labelQuery**: a [set-based expression](https://kubernetes.io/docs/concepts/overview/working-with-objects/labels/#set-based-requirement) that pod labels must match.
 
-Pod must satisfy each of the criteria (namespace, label, labelQuery) specified in a given selector,
-but a listener can have several **selectors**, and pod must match all of the criteria of only one of them.
-In case a pod match multiple selectors in different listeners, the first declared listener wins.
+A pod must satisfy each criterion (namespace, label, labelQuery) specified in a given selector. However, a listener can have several selectors,
+and a pod must match all the criteria of only one of them. If a pod matches multiple selectors in different listeners, the first declared listener wins.
 
 ## Data Extractions
 
-The following sections defines how to extract environment information.
-k8s-golive-monitor is litening pod events to keep track of status/info, but to extract data,
-it is interested in the pod owner resource: Deployment, StatefulSet, DaemonSet.
-Only these 3 are currently supported (Job, single Pod... are ignored).
+k8s-golive-monitor listens to pod events and apply **selectors** on it to know if a pod should be monitored.
+However, to extract data, it focuses on the pod owner resource: Deployment, StatefulSet, DaemonSet.
+Only these three are currently supported (Jobs, single Pods, etc., are ignored).
 
-When a pod match a selector, k8s-golive-monitor find owning resource, and apply the extraction
-rules on it to get application, category, version...
+When a pod matches a selector, k8s-golive-monitor finds the owning resource
+and applies the extraction rules to it to retrieve application, category, version, etc.
 
-This means when a configuration requires to extract information from a label, annotation, jsonpath,
-the handler will work at owner level (eg: Deployment...).
-
-An exception, is, if the configuration specifies we want to apply the rules at namespace.
-It is common the use namespace to design/categorizes the topology of our environments (eg: Dev, QA, Staging).
-That's, k8s-golive-monitor can extract information from namespace, if configured for.
+The following sections describes how to extract environment information.
 
 ## Category
 
-Category section is to extract Golive category name:
+Category section is to extract the environment category name:
 ```yaml
 listeners:
   - id: my-listener
@@ -136,10 +132,10 @@ listeners:
 ```
 
 ### Parameters
-* **namespace** : boolean to specify if we want to search for label/annotation/template at namespace level or owner (eg: Deployment)
-* **value** : hard-coded value taken as is from the configuration
-* **label** : name taken from value of this label
-* **annotation** : value of this annotation used
+* **namespace** : a boolean specifying if we want to search for a label/annotation/template at the namespace level or the owner level (e.g., Deployment).
+* **value** : a hard-coded value taken as is from the configuration.
+* **label** : name taken from the value of this label.
+* **annotation** : value of this annotation is used.
 * **template** : possibility to customize the value with [template expression](#template-expression)
 
 For the template expression, here is the available context element:
@@ -180,10 +176,10 @@ listeners:
 ```
 
 ### Parameters
-* **namespace** : boolean to specify if we want to search for label/annotation/template at namespace level or owner (eg: Deployment)
-* **value** : hard-coded value taken as is from the configuration
-* **label** : name taken from value of this label
-* **annotation** : value of this annotation used
+* **namespace** : a boolean specifying if we want to search for a label/annotation/template at the namespace level or the owner level (e.g., Deployment).
+* **value** : a hard-coded value taken as is from the configuration.
+* **label** : name taken from the value of this label.
+* **annotation** : value of this annotation is used.
 * **template** : possibility to customize the value with [template expression](#template-expression)
 
 For the template expression, here is the available context element:
@@ -225,11 +221,11 @@ listeners:
 ```
 
 ### Parameters
-* **ignore** : in case deployment should not be tracked into Golive.
-* **namespace** : boolean to specify if we want to search for label/annotation/template at namespace level or owner (eg: Deployment)
-* **value** : hard-coded value taken as is from the configuration
-* **label** : name taken from value of this label
-* **annotation** : value of this annotation used
+* **ignore** : flag to ignore tracking of version/deployment information.
+* **namespace** : a boolean specifying if we want to search for a label/annotation/template at the namespace level or the owner level (e.g., Deployment).
+* **value** : a hard-coded value taken as is from the configuration.
+* **label** : name taken from the value of this label.
+* **annotation** : value of this annotation is used.
 * **template** : possibility to customize the value with [template expression](#template-expression)
 
 For the template expression, here is the available context element:
@@ -318,15 +314,15 @@ listeners:
 * **fromPath**: json path expression evaluated on owning resource
 
 ## Status
-To keep track of your environment statuses, you have to map operator status to Golive status.
+To track environment statuses, you must map operator statuses to Golive statuses.
 
-Operator evalute the state of an environment using 4 different statuses:
+The operator evaluates the state of an environment using four different statuses:
 * down: environment is not running (eg: deployment replicas set to 0)
 * up: up and running (eg: deployment desired and read replicas are equals)
 * deploy: a change is ongoing (eg: deployment is starting up or a new deployment update happens and pods are restarting)
-* failed: deploymennt failed (eg: deployment has been updated, but pod are not able to start)
+* failed: deployment failed (eg: deployment has been updated, but pod are not able to start)
 
-Golive status can be identified by their id and/or name.
+Golive statuses can be identified by their ID and/or name:
 ```yaml
 statusMapping:
   down:
@@ -341,10 +337,9 @@ statusMapping:
 
 ## Template Expression
 
-In various part of configuration, [go template expression](https://pkg.go.dev/text/template) can be used
-to transform value before sending them to golive.
+In various parts of the configuration, [Go template expression](https://pkg.go.dev/text/template) can be used to transform values before sending them to Golive.
 
-In addition to the standard go template function, here are the additional one provided:
+In addition to the standard Go template functions, the following additional ones are provided:
 * **title** : https://pkg.go.dev/strings#ToTitle
 * **lower** : https://pkg.go.dev/strings#ToLower
 * **upper** : https://pkg.go.dev/strings#ToUpper
@@ -352,24 +347,32 @@ In addition to the standard go template function, here are the additional one pr
 * **label** : read label value from the owned resource
 * **jsonPath** : evaluate the jsonPath expression on the owned resource
 
+## Environment Variables
+
+Configuration is done using a YAML file. All values can be overridden by environment variables. For example:
+```yaml
+golive:
+  offline: true
+```
+can be overridden with:
+```shell
+GOLIVE_OFFLINE=true
+```
+
 # Limitations
 
 ## Monitored Resources
 
-The operator listens pods for events, but it capture information/status from its owner perspective.
+The operator listens to pods for events but captures information/status from the perspective of their owner.
+This means pods created manually without an owner are ignored.
 
-This means pod created manually which do not have owner are ignored.
-
-Current ownership resource type supported are:
-* DaemonSet
-* StatefueSet
-* Deployment
+Currently, ownership resource types supported are DaemonSet, StatefulSet, and Deployment.
 
 ## Deployment Date
 
-Currently, *Deployment Date* is set to *now*, so, in case you have enabled the option "Track re-deployments of the same version", each time Golive is updated
-by the operator, a new deployment will be generated.
+Currently, *Deployment Date* is set to now, so if you have enabled the option "Track re-deployments of the same version",
+each time Golive is updated by the operator, a new deployment will be generated.
 
 ## Attributes
 
-If you are populating attributes, for the moment, you have to make sure they exist in Golive and create them before.
+If you are populating attributes, you must ensure they exist in Golive and create them beforehand.
