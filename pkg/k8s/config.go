@@ -77,6 +77,8 @@ type Config struct {
 		Username string
 		Password string
 		Token    string
+		Offline  bool
+		Yaml     bool
 	}
 	Initialize struct {
 		EnvironmentAttributes []AttributeDefinition

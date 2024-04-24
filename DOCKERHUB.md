@@ -10,3 +10,83 @@ With integrated notifications and approvals in Jira, stakeholders stay informed 
 process.
 
 Learn more about Apwide Golive: https://www.apwide.com
+
+## Configuration
+
+### Golive
+
+By default, operator runs in offline mode, which logs the data supposed to be sent to Golive. This will help you to first configure what to track and
+how to extract and send data to Golive. Offline mode supports logging Golive payload in yaml or json:
+```yaml
+golive:
+  offline: true
+  yaml: true
+```
+
+When you are ready, you can disable the offline mode and configure Golive API client to push information:
+
+#### Cloud
+For cloud, you only need an [authentication token](https://www.apwide.com/golive/cloud/environments/help/how-to-use-api-tokens)
+```yaml
+golive:
+  offline: false
+  token: "eyJra[...]xKWvNoQ"
+```
+
+#### Server
+For server, you need to specify the Golive base API url for your given Jira instance and its credentials:
+```yaml
+golive:
+  offline: false
+  # https://[jiraBaseUrl]:[jiraPort]/[jiraContextPath]/rest/apwide/tem/1.1
+  url: https://jira.company.com/rest/apwide/tem/1.1
+  username: golive-service-account
+  password: XXXX
+```
+
+### Listeners
+
+
+### Status
+To keep track of your environment statuses, you have to map operator status to Golive status.
+
+Operator evalute the state of an environment using 4 different statuses:
+* down: environment is not running (eg: deployment replicas set to 0)
+* up: up and running (eg: deployment desired and read replicas are equals)
+* deploy: a change is ongoing (eg: deployment is starting up or a new deployment update happens and pods are restarting)
+* failed: deploymennt failed (eg: deployment has been updated, but pod are not able to start)
+
+Golive status can be identified by their id and/or name.
+```yaml
+statusMapping:
+  down:
+    name: Down
+  up:
+    name: Up
+  deploy:
+    name: Deploy
+  failed:
+    name: Down
+```
+
+## Limitations
+
+### Monitored Resources
+
+The operator listens pods for events, but it capture information/status from its owner perspective.
+
+This means pod created manually which do not have owner are ignored.
+
+Current ownership resource type supported are:
+* DaemonSet
+* StatefueSet
+* Deployment
+
+### Deployment Date
+
+Currently, *Deployment Date* is set to *now*, so, in case you have enabled the option "Track re-deployments of the same version", each time Golive is updated
+by the operator, a new deployment will be generated.
+
+### Attributes
+
+If you are populating attributes, for the moment, you have to make sure they exist in Golive and create them before.

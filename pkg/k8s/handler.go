@@ -2,8 +2,10 @@ package k8s
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"github.com/apwide/k8s-monitor/pkg/golive"
+	"gopkg.in/yaml.v3"
 	"io"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -12,12 +14,42 @@ import (
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/klog/v2"
 	"maps"
+	"net/http"
 	"slices"
 	"strings"
 	"time"
 )
 
-func NewHandler(ctx context.Context, clientSet *kubernetes.Clientset, listener Listener, golive *golive.ClientWithResponses, cfg Config) *Handler {
+type GoliveDataSender interface {
+	PostEnvironmentInformation(ctx context.Context, info golive.PostEnvironmentInformationJSONRequestBody, reqEditors ...golive.RequestEditorFn) (*http.Response, error)
+}
+
+type GoliveLoggerSender struct {
+	logger klog.Logger
+	yaml   bool
+}
+
+func (g *GoliveLoggerSender) marshal(obj interface{}) ([]byte, error) {
+	if g.yaml {
+		return yaml.Marshal(obj)
+	} else {
+		return json.Marshal(obj)
+	}
+}
+
+func (g *GoliveLoggerSender) PostEnvironmentInformation(ctx context.Context, info golive.PostEnvironmentInformationJSONRequestBody, reqEditors ...golive.RequestEditorFn) (*http.Response, error) {
+	payload, err := g.marshal(info)
+	if err != nil {
+		g.logger.Error(err, "Not able to compite Golive Data Payload")
+	} else {
+		g.logger.Info("Golive Captured Data", "payload", string(payload))
+	}
+	return &http.Response{
+		StatusCode: 200,
+	}, nil
+}
+
+func NewHandler(ctx context.Context, clientSet *kubernetes.Clientset, listener Listener, golive GoliveDataSender, cfg Config) *Handler {
 	logger := klog.FromContext(ctx).WithValues(
 		"handler", listener.Id,
 	)
@@ -97,7 +129,7 @@ type Handler struct {
 	ctx                   context.Context
 	logger                klog.Logger
 	clientSet             *kubernetes.Clientset
-	golive                *golive.ClientWithResponses
+	golive                GoliveDataSender
 	selectors             []ResourceSelector
 	environmentAttributes map[string]string
 }
@@ -235,7 +267,7 @@ func (w *Handler) Handle(resource *MetaResource) {
 	// Check if deployment exists ?
 	if environmentInfo.Deployment != nil {
 		// TODO how to get Deployed Date
-		resource.getDeployedDate()
+		// resource.getDeployedDate()
 		deployedDate := time.Now().Format(time.RFC3339)
 		if deployedDate == "" {
 			deployedDate = time.Now().Format(time.RFC3339)
@@ -243,16 +275,15 @@ func (w *Handler) Handle(resource *MetaResource) {
 		environmentInfo.Deployment.DeployedDate = &deployedDate
 	}
 
-	// TODO ideally, before doing an update, we should load environment info to see if update is necessary (keep track of multiple successive deployment)
 	envInfo, err := w.golive.PostEnvironmentInformation(w.ctx, environmentInfo)
 
-	if envInfo.StatusCode < 200 || envInfo.StatusCode >= 400 {
-		// TODO mandatory ? defer envInfo.Body.Close()
-		// TODO how to parse body ?
-		// TODO mark as failed
+	if err != nil {
+		logger.Error(err, "Error on pushing data to Golive")
+	} else if envInfo.StatusCode < 200 || envInfo.StatusCode >= 400 {
 		goliveCache.delete(environmentInfo.EnvironmentSelector)
 		body, _ := io.ReadAll(envInfo.Body)
-		logger.Info("Not able to push environment information", "error", string(body))
+		err = fmt.Errorf("golive replied with %d and body: %s", envInfo.StatusCode, string(body))
+		logger.Error(err, "Golive not updated")
 	}
 }
 
