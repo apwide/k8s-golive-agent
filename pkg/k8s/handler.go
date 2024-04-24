@@ -303,6 +303,10 @@ var (
 	goliveCache = newCache()
 )
 
+func isDefaultKey(key string) bool {
+	return key == AppKey || key == CatKey || key == VersionKey || key == NameKey
+}
+
 func (w *Handler) getAttributes(resource *MetaResource) map[string]string {
 	attributes := make(map[string]string)
 	maps.Copy(attributes, w.environmentAttributes)
@@ -318,7 +322,7 @@ func (w *Handler) getAttributes(resource *MetaResource) map[string]string {
 		}
 	}
 	for key, value := range resource.GetAnnotations() {
-		if strings.HasPrefix(key, GolivePrefix) && value != "" {
+		if strings.HasPrefix(key, GolivePrefix) && !isDefaultKey(key) && value != "" {
 			attribute := strings.TrimPrefix(key, GolivePrefix)
 			attributes[attribute] = value
 		}

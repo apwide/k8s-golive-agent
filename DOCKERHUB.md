@@ -46,6 +46,24 @@ golive:
 
 ### Listeners
 
+Listeners specify what to track, using *selectors*, and what to extract and push to Golive.
+
+A listener is composed of:
+* **id**: a unique identifier which helps in the logs to know which config has been used
+* **autoCreate**: a boolean to specific if target(s) (application, category and environment) must be created if not existing into Golive if call should fail.
+* **category**: how to extract/select category.
+* **application**: how to extract/select application.
+* **name**: how to extract/select environment name.
+* **attributes**: what and how to extract environment attribute values
+* **selectors**: pod selectors used to select which event should match this configuration.
+
+#### Simple example
+
+Imagine we have this topology:
+* We use k8s namespace to separate our environments (eg: Dev, QA, Staging, Prod...)
+* We have a web application deployed using a deployment resource.
+
+We have this selector
 
 ### Status
 To keep track of your environment statuses, you have to map operator status to Golive status.

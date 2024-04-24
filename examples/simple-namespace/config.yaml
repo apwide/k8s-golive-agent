@@ -1,0 +1,11 @@
+golive:
+  offline: true
+  yaml: true
+
+listeners:
+  - id: frontend-monitoring
+    selectors:
+      - namespace: app-dev
+    autoCreate: true
+    category:
+      namespace: true
