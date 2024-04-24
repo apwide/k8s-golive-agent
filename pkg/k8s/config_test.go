@@ -22,7 +22,7 @@ func TestValue(t *testing.T) {
 
 func TestFullConfig(t *testing.T) {
 	cfg, err := LoadConfig("../../test/data/config-full.yaml")
-	assert.Nil(t, err, "error unexpected", err)
+	assert.NoError(t, err, "error unexpected", err)
 	listener := cfg.Listeners[0]
 	assert.Equal(t, "golive-dev", listener.Selectors[0].Namespace, "wrong namespace")
 	assert.Equal(t, 2, len(listener.Selectors[0].Labels), "wrong number of labels")

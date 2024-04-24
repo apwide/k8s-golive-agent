@@ -43,6 +43,14 @@ jobs:
 #      - id: release
 #        uses: softprops/action-gh-release@v2
 
+# done in docker to save build time
+#      - id: setup-go
+#        uses: actions/setup-go@v5
+#        with:
+#          go-version: '^1.13.1' # The Go version to download (if necessary) and use.
+#      - id: test
+#        run: go test ./... -v
+
       - id: login-dockerhub
         if: ${{ github.ref == 'refs/heads/main' || github.ref == 'refs/heads/develop' }}
         uses: docker/login-action@v2
@@ -62,9 +70,10 @@ jobs:
 
       - id: docker-overview
         uses: peter-evans/dockerhub-description@v4
+        if: ${{ github.ref == 'refs/heads/main' }}
         with:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
-          password: ${{ secrets.DOCKERHUB_PASSWORD }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
           repository: apwide/k8s-golive-monitor
           short-description: ${{ github.event.repository.description }}
           readme-filepath: ./DOCKERHUB.md
