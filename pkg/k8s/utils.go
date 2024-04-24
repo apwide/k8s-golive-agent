@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"k8s.io/client-go/util/jsonpath"
 	"regexp"
+	"strings"
+	"text/template"
 )
 
 func extractJsonPathValue(d *MetaResource, jsonPath string) (string, error) {
@@ -35,6 +37,25 @@ func parseContainerImage(image string) (*dockerImage, error) {
 		}, nil
 	}
 	return nil, fmt.Errorf("unable to parse container image %q", image)
+}
+
+func renderTemplate(input string, resource *MetaResource, ctx map[string]interface{}) (string, error) {
+	funcs := template.FuncMap{
+		"jsonPath":   resource.GetJsonPath,
+		"label":      resource.GetLabel,
+		"annotation": resource.GetAnnotation,
+		"title":      strings.ToTitle,
+		"lower":      strings.ToLower,
+		"upper":      strings.ToUpper,
+	}
+
+	tpl, err := template.New("tpl").Funcs(funcs).Parse(strings.TrimSpace(input))
+	if err != nil {
+		return "", err
+	}
+	buf := new(bytes.Buffer)
+	err = tpl.Execute(buf, ctx)
+	return buf.String(), err
 }
 
 func truncate(value string, max int) string {

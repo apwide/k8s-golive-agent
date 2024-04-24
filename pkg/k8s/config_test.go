@@ -2,21 +2,18 @@ package k8s
 
 import (
 	"github.com/stretchr/testify/assert"
-	"os"
 	"testing"
 )
 
 func TestEmptyConfig(t *testing.T) {
-	os.Setenv("GOLIVE_CONFIG", "../../test/data/config-empty.yaml")
-	cfg, err := LoadConfig()
+	cfg, err := LoadConfig("../../test/data/config-empty.yaml")
 	assert.Nil(t, err, "error unexpected", err)
 	assert.Equal(t, 1, len(cfg.Listeners), "wrong number of listeners")
 	assert.False(t, cfg.Listeners[0].Version.Ignore, "for version ignore")
 }
 
 func TestValue(t *testing.T) {
-	os.Setenv("GOLIVE_CONFIG", "../../test/data/config-empty.yaml")
-	cfg, err := LoadConfig()
+	cfg, err := LoadConfig("../../test/data/config-empty.yaml")
 	assert.Nil(t, err, "error unexpected", err)
 	assert.Equal(t, 1, len(cfg.Listeners), "wrong number of listeners")
 	assert.Equal(t, "golive-dev", cfg.Listeners[0].Id, "wrong listener name")
@@ -24,8 +21,7 @@ func TestValue(t *testing.T) {
 }
 
 func TestFullConfig(t *testing.T) {
-	os.Setenv("GOLIVE_CONFIG", "../../test/data/config-full.yaml")
-	cfg, err := LoadConfig()
+	cfg, err := LoadConfig("../../test/data/config-full.yaml")
 	assert.Nil(t, err, "error unexpected", err)
 	listener := cfg.Listeners[0]
 	assert.Equal(t, "golive-dev", listener.Selectors[0].Namespace, "wrong namespace")

@@ -8,31 +8,30 @@ import (
 )
 
 type AttributeDefinition struct {
-	Name    string `yaml:"name"`
-	Type    string `yaml:"type"`
-	Secured bool   `yaml:"secured"`
+	Name    string
+	Type    string
+	Secured bool
 }
 
 type NameReferenceSource struct {
-	Value      string `yaml:"value"`
-	Label      string `yaml:"label"`
-	Annotation string `yaml:"annotation"`
+	Value      string
+	Label      string
+	Annotation string
+	Template   string
 }
 
 type NamespacedSource struct {
-	Namespace bool `yaml:"namespace"`
+	Namespace bool
 }
 
 type CombinedReferenceSource struct {
-	NameReferenceSource `yaml:"NameReferenceSource,inline"`
-	NamespacedSource    `yaml:"NamespacedSource,inline"`
+	NameReferenceSource `mapstructure:",squash"`
+	NamespacedSource    `mapstructure:",squash"`
 }
 
 type VersionSource struct {
-	CombinedReferenceSource `yaml:"NameReferenceSource,inline"`
-	Prefix                  string `yaml:"prefix"`
-	Suffix                  string `yaml:"suffix"`
-	Ignore                  bool   `yaml:"ignore"`
+	CombinedReferenceSource `mapstructure:",squash"`
+	Ignore                  bool
 }
 
 type AttributeSource struct {
@@ -43,48 +42,48 @@ type AttributeSource struct {
 
 // Selector are applied on pod's
 type Selector struct {
-	Name       string            `yaml:"name"` // makes no sens on pod
-	Namespace  string            `yaml:"namespace"`
-	LabelQuery string            `yaml:"labelQuery"`
-	Labels     map[string]string `yaml:"labels"`
+	Name       string // makes no sens on pod
+	Namespace  string
+	LabelQuery string
+	Labels     map[string]string
 }
 
 type NamedReference struct {
-	Id   *int32  `yaml:"id"`
-	Name *string `yaml:"name"`
+	Id   *int32
+	Name *string
 }
 
 type StatusMapping struct {
-	Down   NamedReference `yaml:"down"`
-	Deploy NamedReference `yaml:"deploy"`
-	Failed NamedReference `yaml:"failed"`
-	Up     NamedReference `yaml:"up"`
+	Down   NamedReference
+	Deploy NamedReference
+	Failed NamedReference
+	Up     NamedReference
 }
 
 type Listener struct {
-	Id          string                  `yaml:"id"`
-	AutoCreate  bool                    `yaml:"autoCreate"`
-	Category    CombinedReferenceSource `yaml:"category"`
-	Application CombinedReferenceSource `yaml:"application"`
-	Name        CombinedReferenceSource `yaml:"name"`
-	Version     VersionSource           `yaml:"version"`
-	Selectors   []Selector              `yaml:"selectors" validate:"min=1"`
-	Attributes  []AttributeSource       `yaml:"attributes"`
+	Id          string
+	AutoCreate  bool
+	Category    CombinedReferenceSource
+	Application CombinedReferenceSource
+	Name        CombinedReferenceSource
+	Version     VersionSource
+	Selectors   []Selector
+	Attributes  []AttributeSource
 }
 
 type Config struct {
 	Golive struct {
-		Url      string `yaml:"url"`
-		Username string `yaml:"username"`
-		Password string `yaml:"password"`
-		Token    string `yaml:"token"`
-	} `yaml:"golive"`
+		Url      string
+		Username string
+		Password string
+		Token    string
+	}
 	Initialize struct {
-		EnvironmentAttributes []AttributeDefinition `yaml:"environmentAttributes"`
-		DeploymentAttributes  []AttributeDefinition `yaml:"deploymentAttributes"`
-	} `yaml:"initialize"`
-	StatusMapping *StatusMapping `yaml:"statusMapping"`
-	Listeners     []Listener     `yaml:"listeners"`
+		EnvironmentAttributes []AttributeDefinition
+		DeploymentAttributes  []AttributeDefinition
+	}
+	StatusMapping *StatusMapping
+	Listeners     []Listener
 }
 
 func (l *Listener) FixedAttributes() map[string]string {

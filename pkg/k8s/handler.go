@@ -23,17 +23,16 @@ func NewHandler(ctx context.Context, clientSet *kubernetes.Clientset, listener L
 	)
 	selectors := make([]ResourceSelector, len(listener.Selectors))
 	for i, config := range listener.Selectors {
-		labelSelector, err := labels.Set(config.Labels).AsValidatedSelector()
+		labelSelector, err := labels.ValidatedSelectorFromSet(config.Labels)
 		if err != nil {
 			panic(err)
 		}
 		if config.LabelQuery != "" {
-			labelQuerySelector, err := labels.Parse(config.LabelQuery)
+			requirements, err := labels.ParseToRequirements(config.LabelQuery)
 			if err != nil {
 				panic(err)
 			}
 			// TODO why labelSelector.Add(requirements) doesn't work ?
-			requirements, _ := labelQuerySelector.Requirements()
 			for _, requirement := range requirements {
 				labelSelector = labelSelector.Add(requirement)
 			}
@@ -158,7 +157,7 @@ func (w *Handler) Handle(resource *MetaResource) {
 	}
 	logger.V(4).Info("Category Found", "source", catRef.Source, "value", catRef.Value)
 
-	envName, err := w.getEnvironmentName(resource)
+	envName, err := w.getEnvironmentName(resource, appRef.Value, catRef.Value)
 	if err != nil {
 		logger.Error(err, "Unable to get environment name")
 		runtime.HandleError(err)
@@ -278,7 +277,7 @@ func (w *Handler) getAttributes(resource *MetaResource) map[string]string {
 	maps.Copy(attributes, w.environmentAttributes)
 	for _, attribute := range w.listener.Attributes {
 		if attribute.FromPath != "" {
-			value, err := extractJsonPathValue(resource, attribute.FromPath)
+			value, err := resource.GetJsonPath(attribute.FromPath)
 			if err != nil {
 				w.logger.Error(err, "Unable to extract attribute value using jsonPath")
 			}
@@ -316,72 +315,79 @@ func (r NameReference) String() string {
 
 func (w *Handler) getNameReference(resource *MetaResource, config *CombinedReferenceSource, defaultKey string) (*ResourceValue[string], error) {
 	logger := w.loggerFor(resource)
+	var name string
+	var err error
 	if config.Value != "" {
 		logger.V(4).Info("Reference value read from config")
 		return &ResourceValue[string]{"Config", config.Value}, nil
 	}
 	// should read from namespace
 	if config.Namespace {
-		ns, err := w.clientSet.CoreV1().Namespaces().Get(w.ctx, resource.GetNamespace(), metav1.GetOptions{})
-		if err != nil {
+		var ns *corev1.Namespace
+		if ns, err = w.clientSet.CoreV1().Namespaces().Get(w.ctx, resource.GetNamespace(), metav1.GetOptions{}); err != nil {
 			return nil, err
 		}
 		if config.Label != "" {
-			name := ns.Labels[config.Label]
-			if name == "" {
+			if name = ns.Labels[config.Label]; name == "" {
 				return nil, fmt.Errorf("label %q not found on on %q (%q)", config.Label, ns.Name, ns.Kind)
 			} else {
 				return &ResourceValue[string]{"Namespace Label", name}, nil
 			}
 		}
 		if config.Annotation != "" {
-			name := ns.Annotations[config.Annotation]
-			if name == "" {
+			if name = ns.Annotations[config.Annotation]; name == "" {
 				return nil, fmt.Errorf("annotation %q not found on %q (%q)", config.Annotation, ns.Name, ns.Kind)
 			} else {
 				return &ResourceValue[string]{"Namespace Annotation", name}, nil
 			}
 		}
-		name := ns.Labels[defaultKey]
-		if name != "" {
+		if name = ns.Labels[defaultKey]; name != "" {
 			return &ResourceValue[string]{"Namespace Default Label", name}, nil
 		}
-		name = ns.Annotations[defaultKey]
-		if name != "" {
+		if name = ns.Annotations[defaultKey]; name != "" {
 			return &ResourceValue[string]{"Namespace Default Annotation", name}, nil
 		}
 		return &ResourceValue[string]{"Namespace Name", ns.Name}, nil
 	}
 
 	if config.Label != "" {
-		name := resource.GetLabels()[config.Label]
-		if name == "" {
+		if name = resource.GetLabel(config.Label); name == "" {
 			return nil, fmt.Errorf("label %q not found on %q (%q)", config.Label, resource.GetName(), resource.GetKind())
 		} else {
 			return &ResourceValue[string]{"Resource Label", name}, nil
 		}
 	}
 	if config.Annotation != "" {
-		name := resource.GetAnnotations()[config.Annotation]
-		if name == "" {
+		if name = resource.GetAnnotation(config.Annotation); name == "" {
 			return nil, fmt.Errorf("annotation %q not found on %q (%q)", config.Annotation, resource.GetName(), resource.GetKind())
 		} else {
 			return &ResourceValue[string]{"Resource Annotation", name}, nil
 		}
 	}
-	if name := resource.GetLabels()[defaultKey]; name != "" {
+	if name = resource.GetLabels()[defaultKey]; name != "" {
 		return &ResourceValue[string]{"Resource Default Label", name}, nil
 	}
-	if name := resource.GetAnnotations()[defaultKey]; name != "" {
+	if name = resource.GetAnnotations()[defaultKey]; name != "" {
 		return &ResourceValue[string]{"Resource Default Annotation", name}, nil
 	}
 	return &ResourceValue[string]{"None", ""}, nil
 }
 
-func (w *Handler) getEnvironmentName(resource *MetaResource) (value *ResourceValue[string], err error) {
-	value, err = w.getNameReference(resource, &w.listener.Name, NameKey)
-	if value.Value == "" && err == nil {
+func (w *Handler) getEnvironmentName(resource *MetaResource, app NameReference, cat NameReference) (value *ResourceValue[string], err error) {
+	if value, err = w.getNameReference(resource, &w.listener.Name, NameKey); err != nil {
+		return
+	}
+	if value.Value == "" {
 		value = &ResourceValue[string]{"Resource Name", resource.GetName()}
+	}
+	if w.listener.Name.Template != "" {
+		ctx := make(map[string]interface{})
+		ctx["Value"] = value.Value
+		ctx["App"] = app
+		ctx["Cat"] = cat
+		if value.Value, err = renderTemplate(w.listener.Name.Template, resource, ctx); err != nil {
+			return
+		}
 	}
 	return
 }
@@ -390,13 +396,16 @@ func (w *Handler) getVersionName(resource *MetaResource) (value *ResourceValue[s
 	value, err = w.getNameReference(resource, &w.listener.Version.CombinedReferenceSource, VersionKey)
 	if value.Value == "" && err == nil {
 		var image *dockerImage
-		image, err = parseContainerImage(resource.GetPodTemplate().Spec.Containers[0].Image)
-		if image != nil {
+		if image, err = parseContainerImage(resource.GetPodTemplate().Spec.Containers[0].Image); image != nil {
 			value = &ResourceValue[string]{"Image Tag", image.tag}
 		}
 	}
-	if value.Value != "" {
-		value.Value = w.listener.Version.Prefix + value.Value + w.listener.Version.Suffix
+	if value.Value != "" && w.listener.Version.Template != "" {
+		ctx := make(map[string]interface{})
+		ctx["Value"] = value.Value
+		if value.Value, err = renderTemplate(w.listener.Version.Template, resource, ctx); err != nil {
+			return
+		}
 	}
 	return
 }
