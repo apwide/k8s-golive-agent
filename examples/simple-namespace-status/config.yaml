@@ -2,6 +2,16 @@ golive:
   offline: true
   yaml: true
 
+statusMapping:
+  down:
+    name: Down
+  up:
+    name: Up
+  deploy:
+    name: Deploy
+  failed:
+    id: 4
+
 listeners:
   - id: frontend-monitoring
     selectors:
@@ -9,3 +19,5 @@ listeners:
     autoCreate: true
     category:
       namespace: true
+    application:
+      label: "my.company.com/label"

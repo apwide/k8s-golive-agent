@@ -435,7 +435,7 @@ func (w *Handler) getVersionName(resource *MetaResource) (value *ResourceValue[s
 			value = &ResourceValue[string]{"Image Tag", image.tag}
 		}
 	}
-	if value.Value != "" && w.listener.Version.Template != "" {
+	if w.listener.Version.Template != "" {
 		ctx := make(map[string]interface{})
 		ctx["Value"] = value.Value
 		if value.Value, err = renderTemplate(w.listener.Version.Template, resource, ctx); err != nil {
@@ -459,6 +459,13 @@ func (w *Handler) getApplicationReference(resource *MetaResource) (*ResourceValu
 	if value.Value == "" {
 		return nil, fmt.Errorf("unable to extract application reference from %q (%q) in namespace %s", resource.GetName(), resource.GetKind(), resource.GetNamespace())
 	}
+	if w.listener.Application.Template != "" {
+		ctx := make(map[string]interface{})
+		ctx["Value"] = value.Value
+		if value.Value, err = renderTemplate(w.listener.Application.Template, resource, ctx); err != nil {
+			return nil, err
+		}
+	}
 	return &ResourceValue[NameReference]{
 		value.Source,
 		NameReference{
@@ -471,6 +478,13 @@ func (w *Handler) getCategoryReference(resource *MetaResource) (*ResourceValue[N
 	value, err := w.getNameReference(resource, &w.listener.Category, CatKey)
 	if err != nil {
 		return nil, fmt.Errorf("unable to extract category reference from %q (%q) in namespace %s", resource.GetName(), resource.GetKind(), resource.GetNamespace())
+	}
+	if w.listener.Category.Template != "" {
+		ctx := make(map[string]interface{})
+		ctx["Value"] = value.Value
+		if value.Value, err = renderTemplate(w.listener.Category.Template, resource, ctx); err != nil {
+			return nil, err
+		}
 	}
 	return &ResourceValue[NameReference]{
 		value.Source,

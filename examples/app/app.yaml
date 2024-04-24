@@ -16,8 +16,11 @@ metadata:
   name: payment-app
   namespace: app-dev
   annotations:
-    golive.apwide.net/cat: App Dev
+    golive.apwide.net/cat: "Default Deployment Annotation"
     golive.apwide.net/CustomAttribute: "Deployment Attribute Value"
+    my.company.com/label: "custom-deployment-annotation"
+  labels:
+    my.company.com/label: "custom-deployment-label"
 spec:
   selector:
     matchLabels:
