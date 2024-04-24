@@ -310,7 +310,7 @@ func isDefaultKey(key string) bool {
 func (w *Handler) getAttributes(resource *MetaResource) map[string]string {
 	attributes := make(map[string]string)
 	maps.Copy(attributes, w.environmentAttributes)
-	for _, attribute := range w.listener.Attributes {
+	for _, attribute := range w.listener.EnvironmentAttributes {
 		if attribute.FromPath != "" {
 			value, err := resource.GetJsonPath(attribute.FromPath)
 			if err != nil {

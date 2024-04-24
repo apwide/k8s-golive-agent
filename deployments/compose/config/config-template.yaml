@@ -78,9 +78,9 @@ listeners:
 #      # prefix: CLOUD-
 #      # suffix add a suffix to the version found
 #      # suffix: -SNAPSHOT
-#    # attributes configure how to extract environment attributes from pod's owner
+#    # environmentAttributes configure how to extract environment attributes from pod's owner
 #    # in addition to the configuration, the operator is going to search for annotation "golive.apwide.net/XXXX" where XXXX is the attribute to push
-#    attributes:
+#    environmentAttributes:
 #      # name of the attribute (key)
 #      - name: Cluster
 #      # value is the hard-coded value of the attribute

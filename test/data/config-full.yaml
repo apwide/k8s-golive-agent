@@ -55,7 +55,7 @@ listeners:
     autoCreate: true
     # TODO environment name capture ?
     # environment attributes capture
-    attributes:
+    environmentAttributes:
       # Attribute name
       - name: Cluster
         value: DEV

@@ -31,7 +31,7 @@ func TestFullConfig(t *testing.T) {
 	assert.True(t, listener.Category.Namespace, "wrong category namespace")
 	assert.Equal(t, "my.company.com/cat", listener.Category.Label, "wrong category label")
 	assert.Equal(t, "my.company.com/app", listener.Application.Annotation, "wrong application annotation")
-	assert.Equal(t, "Cluster", listener.Attributes[0].Name, "wrong attribute name")
-	assert.Equal(t, "DEV", listener.Attributes[0].Value, "wrong attribute value")
-	assert.Equal(t, `$.spec.template.spec.containers[0].env[?(@.name=="APWIDE_DEPLOYMENT-MODE")].value`, listener.Attributes[2].FromPath, "wrong attribute fromPath multiline")
+	assert.Equal(t, "Cluster", listener.EnvironmentAttributes[0].Name, "wrong attribute name")
+	assert.Equal(t, "DEV", listener.EnvironmentAttributes[0].Value, "wrong attribute value")
+	assert.Equal(t, `$.spec.template.spec.containers[0].env[?(@.name=="APWIDE_DEPLOYMENT-MODE")].value`, listener.EnvironmentAttributes[2].FromPath, "wrong attribute fromPath multiline")
 }

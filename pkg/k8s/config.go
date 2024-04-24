@@ -61,14 +61,14 @@ type StatusMapping struct {
 }
 
 type Listener struct {
-	Id          string
-	AutoCreate  bool
-	Category    CombinedReferenceSource
-	Application CombinedReferenceSource
-	Name        CombinedReferenceSource
-	Version     VersionSource
-	Selectors   []Selector
-	Attributes  []AttributeSource
+	Id                    string
+	AutoCreate            bool
+	Category              CombinedReferenceSource
+	Application           CombinedReferenceSource
+	Name                  CombinedReferenceSource
+	Version               VersionSource
+	Selectors             []Selector
+	EnvironmentAttributes []AttributeSource
 }
 
 type Config struct {
@@ -90,7 +90,7 @@ type Config struct {
 
 func (l *Listener) FixedAttributes() map[string]string {
 	attributes := make(map[string]string)
-	for _, attribute := range l.Attributes {
+	for _, attribute := range l.EnvironmentAttributes {
 		if attribute.Value != "" {
 			attributes[attribute.Name] = attribute.Value
 		}
