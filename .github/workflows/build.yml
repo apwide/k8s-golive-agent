@@ -80,5 +80,5 @@ jobs:
           password: ${{ secrets.DOCKERHUB_TOKEN }}
           repository: apwide/k8s-golive-monitor
           short-description: ${{ github.event.repository.description }}
-          readme-filepath: ./examples/DOCKERHUB.md
+          readme-filepath: ./DOCKERHUB.md
 
