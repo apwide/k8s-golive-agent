@@ -25,7 +25,7 @@ to compile environment information, subsequently sending it to Golive.
 
 # Examples
 
-Have a look at our [various examples](./examples/README.md) and publish them on your cluster to see how it works
+Have a look at our [various examples](https://github.com/apwide/helm-charts/tree/main/charts/k8s-golive-monitor/examples) and publish them on your cluster to see how it works
 
 # Configuration
 
