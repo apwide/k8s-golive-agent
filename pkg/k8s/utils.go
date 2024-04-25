@@ -68,7 +68,14 @@ func truncate(value string, max int) string {
 }
 
 func ExpandUserHome(path string) string {
-	usr, _ := user.Current()
+	if path == "" {
+
+	}
+	usr, err := user.Current()
+	if err != nil || usr == nil {
+		return path
+	}
+
 	dir := usr.HomeDir
 
 	if path == "~" {
