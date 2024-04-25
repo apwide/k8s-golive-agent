@@ -1,6 +1,6 @@
 package golive
 
-//go:generate go run github.com/deepmap/oapi-codegen/v2/cmd/oapi-codegen --config=golive-gen.yaml tem-api.yaml
+//go:generate go run github.com/deepmap/oapi-codegen/v2/cmd/oapi-codegen --config=golive-gen.yaml golive.json
 
 import (
 	"context"
@@ -55,9 +55,18 @@ func Golive(ctx context.Context, config GoliveConfig) (*ClientWithResponses, err
 	if provider.authorizationHeader != "" {
 		return NewClientWithResponses(url, WithRequestEditorFn(provider.Intercept))
 	}
-	return NewClientWithResponses(url)
+	client, err := NewClientWithResponses(url)
+	if err != nil {
+		return nil, err
+	}
+	err = client.Test(ctx)
+	if err != nil {
+		return nil, err
+	}
+	return client, nil
 }
 
+// TODO call to GoliveInfo (ClientProduct) or call /statuses
 func (c *ClientWithResponses) Test(ctx context.Context) error {
 	result, err := c.GetApplicationsWithResponse(ctx, nil)
 	if err != nil {

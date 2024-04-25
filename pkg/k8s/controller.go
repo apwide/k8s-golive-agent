@@ -35,17 +35,20 @@ func Start(ctx context.Context, kubeconfig *rest.Config, cfg Config) {
 	logger.Info("Listeners loaded", "count", len(cfg.Listeners))
 
 	// TODO simplify with interface or type assertions to avoid copy type ?
-	goliveClient, _ := golive.Golive(ctx, golive.GoliveConfig{
-		Url:      cfg.Golive.Url,
-		Token:    cfg.Golive.Token,
-		Username: cfg.Golive.Username,
-		Password: cfg.Golive.Password,
-	})
-	// TODO call to GoliveInfo (ClientProduct) or call /statuses
-	err := goliveClient.Test(ctx)
-	if err != nil {
-		logger.Error(err, "Unable to contact Golive")
-		panic(err)
+	var goliveClient GoliveDataSender
+	goliveClient = &GoliveLoggerSender{logger, cfg.Golive.Yaml}
+	if !cfg.Golive.Offline {
+		var err error
+		goliveClient, err = golive.Golive(ctx, golive.GoliveConfig{
+			Url:      cfg.Golive.Url,
+			Token:    cfg.Golive.Token,
+			Username: cfg.Golive.Username,
+			Password: cfg.Golive.Password,
+		})
+		if err != nil {
+			logger.Error(err, "Unable to contact Golive")
+			panic(err)
+		}
 	}
 
 	//logger.Info("Initialized data into Golive")

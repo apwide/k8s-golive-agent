@@ -1,0 +1,40 @@
+golive:
+  offline: true
+  # url is the API base url:
+  # - Golive cloud (default): https://golive.apwide.net/api
+  # - Golive Server: https://[jiraBaseUrl]:[jiraPort]/[jiraContextPath]/rest/apwide/tem/1.1
+  url: https://golive.apwide.net/api
+  # token is the Golive Cloud API Bearer token (https://www.apwide.com/golive/cloud/environments/help/how-to-use-api-tokens)
+  token: ""
+#  # username of Jira user (Golive Server)
+#  username: ""
+#  # password of Jira user (Golive Server)
+#  password: ""
+
+#initialize:
+#  environmentAttributes:
+#    - name: DeploymentMode
+#      type: string
+#      secured: false
+#  deploymentAttributes:
+#    - name: Original
+#      type: string
+#      secured: false
+
+statusMapping:
+  down:
+    name: Down
+  up:
+    name: Up
+  deploy:
+    name: Deploy
+  failed:
+    name: Down
+
+# look at examples to see what is possible
+
+listeners:
+  - id: all
+    category:
+      namespace: true
+

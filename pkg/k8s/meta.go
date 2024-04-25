@@ -102,6 +102,18 @@ func (d DaemonSet) getDeployedDate() string {
 	return ""
 }
 
+func (rsc *MetaResource) GetJsonPath(path string) (string, error) {
+	return extractJsonPathValue(rsc, path)
+}
+
+func (rsc *MetaResource) GetLabel(label string) string {
+	return rsc.GetLabels()[label]
+}
+
+func (rsc *MetaResource) GetAnnotation(annotation string) string {
+	return rsc.GetAnnotations()[annotation]
+}
+
 func ToListenable(obj interface{}) (Listenable, error) {
 	switch obj.(type) {
 	case *appsv1.Deployment:

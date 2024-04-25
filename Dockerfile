@@ -8,10 +8,14 @@ COPY go.sum ./
 RUN go mod download
 COPY pkg ./pkg/
 COPY cmd/k8s-monitor/main.go ./
+COPY test ./test/
 
 # RUN ls
+ENV CGO_ENABLED=0
+ENV GOOS=linux
 
-RUN CGO_ENABLED=0 GOOS=linux go build -o /k8s-golive-monitor
+RUN go test ./... -v && \
+    go build -o /k8s-golive-monitor
 # RUN go build -o /app
 
 FROM gcr.io/distroless/base-debian11 AS build-release-stage

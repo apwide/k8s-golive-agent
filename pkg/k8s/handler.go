@@ -2,8 +2,11 @@ package k8s
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
+	"github.com/apwide/k8s-monitor/pkg/cache"
 	"github.com/apwide/k8s-monitor/pkg/golive"
+	"gopkg.in/yaml.v3"
 	"io"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -12,28 +15,57 @@ import (
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/klog/v2"
 	"maps"
+	"net/http"
 	"slices"
 	"strings"
 	"time"
 )
 
-func NewHandler(ctx context.Context, clientSet *kubernetes.Clientset, listener Listener, golive *golive.ClientWithResponses, cfg Config) *Handler {
+type GoliveDataSender interface {
+	PostEnvironmentInformation(ctx context.Context, info golive.PostEnvironmentInformationJSONRequestBody, reqEditors ...golive.RequestEditorFn) (*http.Response, error)
+}
+
+type GoliveLoggerSender struct {
+	logger klog.Logger
+	yaml   bool
+}
+
+func (g *GoliveLoggerSender) marshal(obj interface{}) ([]byte, error) {
+	if g.yaml {
+		return yaml.Marshal(obj)
+	} else {
+		return json.Marshal(obj)
+	}
+}
+
+func (g *GoliveLoggerSender) PostEnvironmentInformation(ctx context.Context, info golive.PostEnvironmentInformationJSONRequestBody, reqEditors ...golive.RequestEditorFn) (*http.Response, error) {
+	payload, err := g.marshal(info)
+	if err != nil {
+		g.logger.Error(err, "Not able to compite Golive Data Payload")
+	} else {
+		g.logger.Info("Golive Captured Data", "payload", string(payload))
+	}
+	return &http.Response{
+		StatusCode: 200,
+	}, nil
+}
+
+func NewHandler(ctx context.Context, clientSet *kubernetes.Clientset, listener Listener, golive GoliveDataSender, cfg Config) *Handler {
 	logger := klog.FromContext(ctx).WithValues(
 		"handler", listener.Id,
 	)
 	selectors := make([]ResourceSelector, len(listener.Selectors))
 	for i, config := range listener.Selectors {
-		labelSelector, err := labels.Set(config.Labels).AsValidatedSelector()
+		labelSelector, err := labels.ValidatedSelectorFromSet(config.Labels)
 		if err != nil {
 			panic(err)
 		}
 		if config.LabelQuery != "" {
-			labelQuerySelector, err := labels.Parse(config.LabelQuery)
+			requirements, err := labels.ParseToRequirements(config.LabelQuery)
 			if err != nil {
 				panic(err)
 			}
 			// TODO why labelSelector.Add(requirements) doesn't work ?
-			requirements, _ := labelQuerySelector.Requirements()
 			for _, requirement := range requirements {
 				labelSelector = labelSelector.Add(requirement)
 			}
@@ -98,7 +130,7 @@ type Handler struct {
 	ctx                   context.Context
 	logger                klog.Logger
 	clientSet             *kubernetes.Clientset
-	golive                *golive.ClientWithResponses
+	golive                GoliveDataSender
 	selectors             []ResourceSelector
 	environmentAttributes map[string]string
 }
@@ -110,6 +142,9 @@ func match(pod *corev1.Pod) func(s ResourceSelector) bool {
 }
 
 func (w *Handler) match(pod *corev1.Pod) bool {
+	if len(w.selectors) == 0 {
+		return true
+	}
 	matched := slices.ContainsFunc(w.selectors, match(pod))
 	w.logger.V(2).Info(fmt.Sprintf("Handler matched: %t", matched),
 		"handler", w.listener.Id,
@@ -158,7 +193,7 @@ func (w *Handler) Handle(resource *MetaResource) {
 	}
 	logger.V(4).Info("Category Found", "source", catRef.Source, "value", catRef.Value)
 
-	envName, err := w.getEnvironmentName(resource)
+	envName, err := w.getEnvironmentName(resource, appRef.Value, catRef.Value)
 	if err != nil {
 		logger.Error(err, "Unable to get environment name")
 		runtime.HandleError(err)
@@ -227,7 +262,7 @@ func (w *Handler) Handle(resource *MetaResource) {
 		Status: status,
 	}
 
-	updated := goliveCache.setIfOutdated(environmentInfo.EnvironmentSelector, environmentInfo)
+	updated := goliveCache.SetIfOutdated(environmentInfo.EnvironmentSelector, environmentInfo)
 	if !updated {
 		logger.V(4).Info("Golive should be up-to-date")
 		return
@@ -236,7 +271,7 @@ func (w *Handler) Handle(resource *MetaResource) {
 	// Check if deployment exists ?
 	if environmentInfo.Deployment != nil {
 		// TODO how to get Deployed Date
-		resource.getDeployedDate()
+		// resource.getDeployedDate()
 		deployedDate := time.Now().Format(time.RFC3339)
 		if deployedDate == "" {
 			deployedDate = time.Now().Format(time.RFC3339)
@@ -244,16 +279,15 @@ func (w *Handler) Handle(resource *MetaResource) {
 		environmentInfo.Deployment.DeployedDate = &deployedDate
 	}
 
-	// TODO ideally, before doing an update, we should load environment info to see if update is necessary (keep track of multiple successive deployment)
 	envInfo, err := w.golive.PostEnvironmentInformation(w.ctx, environmentInfo)
 
-	if envInfo.StatusCode < 200 || envInfo.StatusCode >= 400 {
-		// TODO mandatory ? defer envInfo.Body.Close()
-		// TODO how to parse body ?
-		// TODO mark as failed
-		goliveCache.delete(environmentInfo.EnvironmentSelector)
+	if err != nil {
+		logger.Error(err, "Error on pushing data to Golive")
+	} else if envInfo.StatusCode < 200 || envInfo.StatusCode >= 400 {
+		goliveCache.Delete(environmentInfo.EnvironmentSelector)
 		body, _ := io.ReadAll(envInfo.Body)
-		logger.Info("Not able to push environment information", "error", string(body))
+		err = fmt.Errorf("golive replied with %d and body: %s", envInfo.StatusCode, string(body))
+		logger.Error(err, "Golive not updated")
 	}
 }
 
@@ -270,15 +304,19 @@ const (
 )
 
 var (
-	goliveCache = newCache()
+	goliveCache = cache.NewCache()
 )
+
+func isDefaultKey(key string) bool {
+	return key == AppKey || key == CatKey || key == VersionKey || key == NameKey
+}
 
 func (w *Handler) getAttributes(resource *MetaResource) map[string]string {
 	attributes := make(map[string]string)
 	maps.Copy(attributes, w.environmentAttributes)
-	for _, attribute := range w.listener.Attributes {
+	for _, attribute := range w.listener.EnvironmentAttributes {
 		if attribute.FromPath != "" {
-			value, err := extractJsonPathValue(resource, attribute.FromPath)
+			value, err := resource.GetJsonPath(attribute.FromPath)
 			if err != nil {
 				w.logger.Error(err, "Unable to extract attribute value using jsonPath")
 			}
@@ -288,7 +326,7 @@ func (w *Handler) getAttributes(resource *MetaResource) map[string]string {
 		}
 	}
 	for key, value := range resource.GetAnnotations() {
-		if strings.HasPrefix(key, GolivePrefix) && value != "" {
+		if strings.HasPrefix(key, GolivePrefix) && !isDefaultKey(key) && value != "" {
 			attribute := strings.TrimPrefix(key, GolivePrefix)
 			attributes[attribute] = value
 		}
@@ -316,72 +354,79 @@ func (r NameReference) String() string {
 
 func (w *Handler) getNameReference(resource *MetaResource, config *CombinedReferenceSource, defaultKey string) (*ResourceValue[string], error) {
 	logger := w.loggerFor(resource)
+	var name string
+	var err error
 	if config.Value != "" {
 		logger.V(4).Info("Reference value read from config")
 		return &ResourceValue[string]{"Config", config.Value}, nil
 	}
 	// should read from namespace
 	if config.Namespace {
-		ns, err := w.clientSet.CoreV1().Namespaces().Get(w.ctx, resource.GetNamespace(), metav1.GetOptions{})
-		if err != nil {
+		var ns *corev1.Namespace
+		if ns, err = w.clientSet.CoreV1().Namespaces().Get(w.ctx, resource.GetNamespace(), metav1.GetOptions{}); err != nil {
 			return nil, err
 		}
 		if config.Label != "" {
-			name := ns.Labels[config.Label]
-			if name == "" {
+			if name = ns.Labels[config.Label]; name == "" {
 				return nil, fmt.Errorf("label %q not found on on %q (%q)", config.Label, ns.Name, ns.Kind)
 			} else {
 				return &ResourceValue[string]{"Namespace Label", name}, nil
 			}
 		}
 		if config.Annotation != "" {
-			name := ns.Annotations[config.Annotation]
-			if name == "" {
+			if name = ns.Annotations[config.Annotation]; name == "" {
 				return nil, fmt.Errorf("annotation %q not found on %q (%q)", config.Annotation, ns.Name, ns.Kind)
 			} else {
 				return &ResourceValue[string]{"Namespace Annotation", name}, nil
 			}
 		}
-		name := ns.Labels[defaultKey]
-		if name != "" {
+		if name = ns.Labels[defaultKey]; name != "" {
 			return &ResourceValue[string]{"Namespace Default Label", name}, nil
 		}
-		name = ns.Annotations[defaultKey]
-		if name != "" {
+		if name = ns.Annotations[defaultKey]; name != "" {
 			return &ResourceValue[string]{"Namespace Default Annotation", name}, nil
 		}
 		return &ResourceValue[string]{"Namespace Name", ns.Name}, nil
 	}
 
 	if config.Label != "" {
-		name := resource.GetLabels()[config.Label]
-		if name == "" {
+		if name = resource.GetLabel(config.Label); name == "" {
 			return nil, fmt.Errorf("label %q not found on %q (%q)", config.Label, resource.GetName(), resource.GetKind())
 		} else {
 			return &ResourceValue[string]{"Resource Label", name}, nil
 		}
 	}
 	if config.Annotation != "" {
-		name := resource.GetAnnotations()[config.Annotation]
-		if name == "" {
+		if name = resource.GetAnnotation(config.Annotation); name == "" {
 			return nil, fmt.Errorf("annotation %q not found on %q (%q)", config.Annotation, resource.GetName(), resource.GetKind())
 		} else {
 			return &ResourceValue[string]{"Resource Annotation", name}, nil
 		}
 	}
-	if name := resource.GetLabels()[defaultKey]; name != "" {
+	if name = resource.GetLabels()[defaultKey]; name != "" {
 		return &ResourceValue[string]{"Resource Default Label", name}, nil
 	}
-	if name := resource.GetAnnotations()[defaultKey]; name != "" {
+	if name = resource.GetAnnotations()[defaultKey]; name != "" {
 		return &ResourceValue[string]{"Resource Default Annotation", name}, nil
 	}
 	return &ResourceValue[string]{"None", ""}, nil
 }
 
-func (w *Handler) getEnvironmentName(resource *MetaResource) (value *ResourceValue[string], err error) {
-	value, err = w.getNameReference(resource, &w.listener.Name, NameKey)
-	if value.Value == "" && err == nil {
+func (w *Handler) getEnvironmentName(resource *MetaResource, app NameReference, cat NameReference) (value *ResourceValue[string], err error) {
+	if value, err = w.getNameReference(resource, &w.listener.Name, NameKey); err != nil {
+		return
+	}
+	if value.Value == "" {
 		value = &ResourceValue[string]{"Resource Name", resource.GetName()}
+	}
+	if w.listener.Name.Template != "" {
+		ctx := make(map[string]interface{})
+		ctx["Value"] = value.Value
+		ctx["App"] = app
+		ctx["Cat"] = cat
+		if value.Value, err = renderTemplate(w.listener.Name.Template, resource, ctx); err != nil {
+			return
+		}
 	}
 	return
 }
@@ -390,13 +435,16 @@ func (w *Handler) getVersionName(resource *MetaResource) (value *ResourceValue[s
 	value, err = w.getNameReference(resource, &w.listener.Version.CombinedReferenceSource, VersionKey)
 	if value.Value == "" && err == nil {
 		var image *dockerImage
-		image, err = parseContainerImage(resource.GetPodTemplate().Spec.Containers[0].Image)
-		if image != nil {
+		if image, err = parseContainerImage(resource.GetPodTemplate().Spec.Containers[0].Image); image != nil {
 			value = &ResourceValue[string]{"Image Tag", image.tag}
 		}
 	}
-	if value.Value != "" {
-		value.Value = w.listener.Version.Prefix + value.Value + w.listener.Version.Suffix
+	if w.listener.Version.Template != "" {
+		ctx := make(map[string]interface{})
+		ctx["Value"] = value.Value
+		if value.Value, err = renderTemplate(w.listener.Version.Template, resource, ctx); err != nil {
+			return
+		}
 	}
 	return
 }
@@ -415,6 +463,13 @@ func (w *Handler) getApplicationReference(resource *MetaResource) (*ResourceValu
 	if value.Value == "" {
 		return nil, fmt.Errorf("unable to extract application reference from %q (%q) in namespace %s", resource.GetName(), resource.GetKind(), resource.GetNamespace())
 	}
+	if w.listener.Application.Template != "" {
+		ctx := make(map[string]interface{})
+		ctx["Value"] = value.Value
+		if value.Value, err = renderTemplate(w.listener.Application.Template, resource, ctx); err != nil {
+			return nil, err
+		}
+	}
 	return &ResourceValue[NameReference]{
 		value.Source,
 		NameReference{
@@ -427,6 +482,13 @@ func (w *Handler) getCategoryReference(resource *MetaResource) (*ResourceValue[N
 	value, err := w.getNameReference(resource, &w.listener.Category, CatKey)
 	if err != nil {
 		return nil, fmt.Errorf("unable to extract category reference from %q (%q) in namespace %s", resource.GetName(), resource.GetKind(), resource.GetNamespace())
+	}
+	if w.listener.Category.Template != "" {
+		ctx := make(map[string]interface{})
+		ctx["Value"] = value.Value
+		if value.Value, err = renderTemplate(w.listener.Category.Template, resource, ctx); err != nil {
+			return nil, err
+		}
 	}
 	return &ResourceValue[NameReference]{
 		value.Source,

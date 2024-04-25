@@ -10,35 +10,99 @@ import (
 	"testing"
 )
 
-func TestSimpleJsonPath(t *testing.T) {
-	file, err := os.ReadFile("../../test/data/deployment.json")
+func loadMetaFrom(path string) *MetaResource {
+	file, err := os.ReadFile(path)
+	if err != nil {
+		panic(err)
+	}
 	decoder := serializer.NewCodecFactory(scheme.Scheme).UniversalDecoder()
 	d := &apps.Deployment{}
-	err = runtime.DecodeInto(decoder, file, d)
-	//err = json.Unmarshal(file, d)
-	if err != nil {
+	if err = runtime.DecodeInto(decoder, file, d); err != nil {
 		panic(err)
 	}
-	r, err := NewMetaResource(d)
-	if err != nil {
+
+	if r, err := NewMetaResource(d); err != nil {
 		panic(err)
+	} else {
+		return r
 	}
+}
+
+func TestSimpleJsonPath(t *testing.T) {
+	r := loadMetaFrom("../../test/data/deployment.json")
 	result, err := extractJsonPathValue(r, ".metadata.namespace")
-	assert.Nil(t, err, "should find namespace in json")
+	assert.NoError(t, err, "should find namespace in json")
 	assert.Equal(t, "golive-dev", result)
 }
 
 func TestComplexJsonPath(t *testing.T) {
-	file, err := os.ReadFile("../../test/data/deployment.json")
-	decoder := serializer.NewCodecFactory(scheme.Scheme).UniversalDecoder()
-	d := &apps.Deployment{}
-	err = runtime.DecodeInto(decoder, file, d)
-	r, _ := NewMetaResource(d)
-	//err = json.Unmarshal(file, d)
-	if err != nil {
-		panic(err)
-	}
+	r := loadMetaFrom("../../test/data/deployment.json")
 	result, err := extractJsonPathValue(r, `$.spec.template.spec.containers[0].env[?(@.name=="APWIDE_DEPLOYMENT-MODE")].value`)
-	assert.Nil(t, err, "should find env APWIDE_DEPLOYMENT-MODE in json")
+	assert.NoError(t, err, "should find env APWIDE_DEPLOYMENT-MODE in json")
 	assert.Equal(t, "true", result)
+}
+
+func TestTemplateFromContext(t *testing.T) {
+	r := loadMetaFrom("../../test/data/deployment.json")
+	appName := "eCommerce"
+	catName := "Dev"
+	app := NameReference{
+		Name: &appName,
+	}
+	cat := NameReference{
+		Name: &catName,
+	}
+	ctx := make(map[string]interface{})
+	ctx["App"] = app
+	ctx["Cat"] = cat
+
+	output, err := renderTemplate("{{ .App.Name }} - {{ .Cat.Name }}", r, ctx)
+	assert.NoError(t, err, "should not fail to render template")
+	assert.Equal(t, appName+" - "+catName, output)
+}
+
+func TestTemplateFromContextWithLower(t *testing.T) {
+	r := loadMetaFrom("../../test/data/deployment.json")
+	appName := "eCommerce"
+	catName := "Dev"
+	app := NameReference{
+		Name: &appName,
+	}
+	cat := NameReference{
+		Name: &catName,
+	}
+	ctx := make(map[string]interface{})
+	ctx["App"] = app
+	ctx["Cat"] = cat
+
+	output, err := renderTemplate(`{{ .App.Name }} {{.Cat.Name | lower }}`, r, ctx)
+	assert.NoError(t, err, "should not fail to render template")
+	assert.Equal(t, "eCommerce dev", output)
+}
+
+func TestTemplateFromJsonPath(t *testing.T) {
+	r := loadMetaFrom("../../test/data/deployment.json")
+	ctx := make(map[string]interface{})
+
+	output, err := renderTemplate(`{{ jsonPath ".metadata.namespace" }}`, r, ctx)
+	assert.NoError(t, err, "should not fail to render template")
+	assert.Equal(t, "golive-dev", output)
+}
+
+func TestTemplateFromLabel(t *testing.T) {
+	r := loadMetaFrom("../../test/data/deployment.json")
+	ctx := make(map[string]interface{})
+
+	output, err := renderTemplate(`{{ label "apwide.net/app" }}`, r, ctx)
+	assert.NoError(t, err, "should not fail to render template")
+	assert.Equal(t, "golive-api", output)
+}
+
+func TestTemplateFromAnnotation(t *testing.T) {
+	r := loadMetaFrom("../../test/data/deployment.json")
+	ctx := make(map[string]interface{})
+
+	output, err := renderTemplate(`{{ annotation "deployment.kubernetes.io/revision" }}`, r, ctx)
+	assert.NoError(t, err, "should not fail to render template")
+	assert.Equal(t, "26", output)
 }

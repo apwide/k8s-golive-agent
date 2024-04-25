@@ -2,6 +2,8 @@ golive:
   url: https://jre.apwide.net/api # fallback on cloud prod
   # basic auth for non cloud ?
   token: ""
+  offline: false
+  yaml: false
 listeners:
   - id: golive-dev
     selectors:
@@ -53,13 +55,13 @@ listeners:
     autoCreate: true
     # TODO environment name capture ?
     # environment attributes capture
-    attributes:
+    environmentAttributes:
       # Attribute name
       - name: Cluster
         value: DEV
       # Attribute name
       - name: Namespace
         # JSON path to apply on resource (Deployment/StatefuleSet/DaemonSet) to extract value
-        fromPath: { $.metadata.namespace }
+        fromPath: " { $.metadata.namespace } "
       - name: Deployment Mode
         fromPath: $.spec.template.spec.containers[0].env[?(@.name=="APWIDE_DEPLOYMENT-MODE")].value
