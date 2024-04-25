@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"github.com/apwide/k8s-monitor/pkg/cache"
 	"github.com/apwide/k8s-monitor/pkg/golive"
 	"gopkg.in/yaml.v3"
 	"io"
@@ -141,6 +142,9 @@ func match(pod *corev1.Pod) func(s ResourceSelector) bool {
 }
 
 func (w *Handler) match(pod *corev1.Pod) bool {
+	if len(w.selectors) == 0 {
+		return true
+	}
 	matched := slices.ContainsFunc(w.selectors, match(pod))
 	w.logger.V(2).Info(fmt.Sprintf("Handler matched: %t", matched),
 		"handler", w.listener.Id,
@@ -258,7 +262,7 @@ func (w *Handler) Handle(resource *MetaResource) {
 		Status: status,
 	}
 
-	updated := goliveCache.setIfOutdated(environmentInfo.EnvironmentSelector, environmentInfo)
+	updated := goliveCache.SetIfOutdated(environmentInfo.EnvironmentSelector, environmentInfo)
 	if !updated {
 		logger.V(4).Info("Golive should be up-to-date")
 		return
@@ -280,7 +284,7 @@ func (w *Handler) Handle(resource *MetaResource) {
 	if err != nil {
 		logger.Error(err, "Error on pushing data to Golive")
 	} else if envInfo.StatusCode < 200 || envInfo.StatusCode >= 400 {
-		goliveCache.delete(environmentInfo.EnvironmentSelector)
+		goliveCache.Delete(environmentInfo.EnvironmentSelector)
 		body, _ := io.ReadAll(envInfo.Body)
 		err = fmt.Errorf("golive replied with %d and body: %s", envInfo.StatusCode, string(body))
 		logger.Error(err, "Golive not updated")
@@ -300,7 +304,7 @@ const (
 )
 
 var (
-	goliveCache = newCache()
+	goliveCache = cache.NewCache()
 )
 
 func isDefaultKey(key string) bool {

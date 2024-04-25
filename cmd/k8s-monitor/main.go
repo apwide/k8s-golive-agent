@@ -18,12 +18,12 @@ func main() {
 	flag.Parse()
 	ctx := signals.SetupSignalHandler()
 
-	kubeConfig, err := clientcmd.BuildConfigFromFlags(master, kubeconfig)
+	kubeConfig, err := clientcmd.BuildConfigFromFlags(master, k8s.ExpandUserHome(kubeconfig))
 	if err != nil {
 		panic(err)
 	}
 
-	goliveConfig, err := k8s.LoadConfig(goliveconfig)
+	goliveConfig, err := k8s.LoadConfig(k8s.ExpandUserHome(goliveconfig))
 	if err != nil {
 		panic(err)
 	}

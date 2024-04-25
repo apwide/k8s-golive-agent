@@ -1,4 +1,4 @@
-package k8s
+package cache
 
 import (
 	"context"
@@ -16,7 +16,7 @@ type GoliveCache struct {
 	logger klog.Logger
 }
 
-func newCache() *GoliveCache {
+func NewCache() *GoliveCache {
 	expiration := 1 * time.Minute
 	return &GoliveCache{
 		cache:  cache2.New(expiration, expiration),
@@ -45,7 +45,7 @@ func (c *GoliveCache) set(key interface{}, item interface{}) {
 	c.cache.Set(jsonKey, payload, cache2.DefaultExpiration)
 }
 
-func (c *GoliveCache) delete(key interface{}) {
+func (c *GoliveCache) Delete(key interface{}) {
 	jsonKey, ok := c.toJson(key, "key")
 	if !ok {
 		return
@@ -69,7 +69,7 @@ func (c *GoliveCache) isUpdateToDate(key interface{}, info interface{}) bool {
 	return data == newData
 }
 
-func (c *GoliveCache) setIfOutdated(key interface{}, info interface{}) bool {
+func (c *GoliveCache) SetIfOutdated(key interface{}, info interface{}) bool {
 	c.mu.Lock()
 	defer c.mu.Unlock()
 	if c.isUpdateToDate(key, info) {

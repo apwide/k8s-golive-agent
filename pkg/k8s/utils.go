@@ -4,6 +4,8 @@ import (
 	"bytes"
 	"fmt"
 	"k8s.io/client-go/util/jsonpath"
+	"os/user"
+	"path/filepath"
 	"regexp"
 	"strings"
 	"text/template"
@@ -63,4 +65,17 @@ func truncate(value string, max int) string {
 		return value
 	}
 	return value[:max]
+}
+
+func ExpandUserHome(path string) string {
+	usr, _ := user.Current()
+	dir := usr.HomeDir
+
+	if path == "~" {
+		return dir
+	} else if strings.HasPrefix(path, "~/") {
+		return filepath.Join(dir, path[2:])
+	} else {
+		return path
+	}
 }
