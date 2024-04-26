@@ -3,6 +3,8 @@ package k8s
 import (
 	"github.com/stretchr/testify/assert"
 	apps "k8s.io/api/apps/v1"
+	corev1 "k8s.io/api/core/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/serializer"
 	"k8s.io/client-go/kubernetes/scheme"
@@ -24,7 +26,11 @@ func loadRsc(path string) interface{} {
 }
 
 func loadMetaFrom(path string) *MetaResource {
-	if r, err := NewMetaResource(loadRsc(path), nil); err != nil {
+	ns := &corev1.Namespace{
+		TypeMeta:   metav1.TypeMeta{},
+		ObjectMeta: metav1.ObjectMeta{},
+	}
+	if r, err := NewMetaResource(loadRsc(path), ns); err != nil {
 		panic(err)
 	} else {
 		return r

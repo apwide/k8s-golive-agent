@@ -14,7 +14,7 @@ func TestGetAttributes(t *testing.T) {
 	annotations := make(map[string]string)
 	annotations[AppKey] = "AppValue"
 	annotations[CatKey] = "CatValue"
-	annotations[GolivePrefix+"CustomAttribute"] = "MyValue"
+	annotations[EnvAttributePrefix+"CustomAttribute"] = "MyValue"
 
 	deployment := appsv1.Deployment{
 		ObjectMeta: metav1.ObjectMeta{
