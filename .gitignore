@@ -1,6 +1,6 @@
 .idea/
 .env
-**/config-local.yaml
+**/config-*local.yaml
 local/
 **/k8s-monitor-*tgz
 **/k8s-golive-monitor-*tgz

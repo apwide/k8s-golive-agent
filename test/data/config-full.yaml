@@ -6,62 +6,26 @@ golive:
   yaml: false
 listeners:
   - id: golive-dev
+    autoCreate: true
     selectors:
-      -
-        # restrict to this namespace
-        namespace: golive-dev
-        # TODO StatefulSet, Deployment, DaemonSet
-        # Select by labels
+      - namespace: golive-dev
+        labelQuery: "app in (golive)"
         labels:
           golive.apwide.net/app: golive-api
           golive.apwide.net/cat: Dev
-    # Strategy to capture environment name
-    name:
-      # 1) Hard-coded value
-      value: "Golive Dev 1"
-      # 2) Should we infer from namespace (if yes, will look for name, annotation, label on namespace
-      namespace: true
-      # 3) Label to search for value (if set but not found => error)
-      label: my.company.com/cat
-      # 4) Annotation to search for value (if set but not found => error)
-      annotation: my.company.com/cat
-      # 5) If label/value/annotation not set, search for default label golive.apwide.net/name
-      # 6) If label/value/annotation not set, search for default annotation golive.apwide.net/name
-      # 7) If label/value/annotation not set, get name
-    # Strategy to capture category
+    environment:
+      url: "{{ defaultAnnotation }}"
+      name: "Golive Dev 1"
+      attributes:
+        - name: Cluster
+          value: DEV
+        - name: Namespace
+          value: "{{ $.metadata.namespace }}"
+        - name: Deployment Mode
+          value: $.spec.template.spec.containers[0].env[?(@.name=="APWIDE_DEPLOYMENT-MODE")].value
     category:
-      # 1) Hard-coded value
-      value: "Dev" # id vs name
-      # 2) Should we infer from namespace (if yes, will look for name, annotation, label on namespace
-      namespace: true
-      # 3) Label to search for value (if set but not found => error)
-      label: my.company.com/cat
-      # 4) Annotation to search for value (if set but not found => error)
-      annotation: my.company.com/cat
-      # 5) If label/value/annotation not set, search for default label golive.apwide.net/cat
-      # 6) If label/value/annotation not set, search for default annotation golive.apwide.net/cat
+      name: |
+        {{ nsLabel "my.company.com/cat" }}
     application:
-      # 1) Hard-coded value
-      value: "Golive" # id vs name
-      # 2) Should we infer from namespace (if yes, will look for name, annotation, label on namespace
-      namespace: true
-      # 3) Label to search for value (if set but not found => error)
-      label: my.company.com/app
-      # 4) Annotation to search for value (if set but not found => error)
-      annotation: my.company.com/app
-      # 5) If label/value/annotation not set, search for default label golive.apwide.net/app
-      # 6) If label/value/annotation not set, search for default annotation golive.apwide.net/app
-    # should auto create cat/app/env (attribute ?)
-    autoCreate: true
-    # TODO environment name capture ?
-    # environment attributes capture
-    environmentAttributes:
-      # Attribute name
-      - name: Cluster
-        value: DEV
-      # Attribute name
-      - name: Namespace
-        # JSON path to apply on resource (Deployment/StatefuleSet/DaemonSet) to extract value
-        fromPath: " { $.metadata.namespace } "
-      - name: Deployment Mode
-        fromPath: $.spec.template.spec.containers[0].env[?(@.name=="APWIDE_DEPLOYMENT-MODE")].value
+      name: |
+        {{ annotation "my.company.com/app" }}

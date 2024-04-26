@@ -1,15 +1,8 @@
 golive:
+  url: https://golive.local.jre.apwide.net/api
+  token: "eyJraWQiOiJnb2xpdmUta2V5IiwiYWxnIjoiUlMyNTYifQ.eyJzdWIiOiJnb2xpdmUtYXBpLWtleSIsInVzZXJBY2NvdW50SWQiOiI1NTcwNTg6MzFlMTk1NzAtMjRhYi00ZDFmLWI1YmMtODRlYzUyM2M3MzhkIiwiaXNzIjoiaHR0cDovL3d3dy5hcHdpZGUuY29tIiwiaWF0IjoxNzEzODEyMjA5LCJnb2xpdmVLZXkiOiJhYTdlNGFkZC1hODk1LTQzOTItYTc0ZS1iMDFiNmZhYTQ5MDEiLCJqdGkiOiIwMTE0N2EzZC1iNDdhLTQwYzEtOTJmMC0zN2MzNmMyMTM5YzQifQ.RQ5Dphp68ftbO2ifJqRlhiWkOkDNXWSxWW2dD3JXA7bYmiSztlXK2b8mZkUHG9-_B89A-K1vfEMCaKiEgL_g9wH7XRBzkycJ5toW3dfzfdhZmLHXtA76vQkXXMZkMgdVKr5kmqf9BxUpswhKUnGmrK0iTwz_FrZSwc5WkZGo5Qwqv1vpN0XNazSgguulH1rW1GcY3u6-oKM2hUuWcqAyKa2Av_0jrG_R3JyiQIvMYj9fTtoRuf1Pmf13KQP_PUrc0cPETMdkJrurezfuTRHo9ZS41IuPxCyxM_eAAGngNy8_-vzRHiqB51_E4NX38_EGeCZPYe6-Zo6A3tPVX-mJkw"
   offline: true
-  # url is the API base url:
-  # - Golive cloud (default): https://golive.apwide.net/api
-  # - Golive Server: https://[jiraBaseUrl]:[jiraPort]/[jiraContextPath]/rest/apwide/tem/1.1
-  url: https://golive.apwide.net/api
-  # token is the Golive Cloud API Bearer token (https://www.apwide.com/golive/cloud/environments/help/how-to-use-api-tokens)
-  token: ""
-#  # username of Jira user (Golive Server)
-#  username: ""
-#  # password of Jira user (Golive Server)
-#  password: ""
+  yaml: true
 
 #initialize:
 #  environmentAttributes:
@@ -31,10 +24,46 @@ statusMapping:
   failed:
     name: Down
 
-# look at examples to see what is possible
-
 listeners:
-  - id: all
+  - id: golive-api
+    autoCreate: true
     category:
-      namespace: true
-
+    # application => from docker image
+    version:
+      name: "CLOUD-{{ mainImageTag }}"
+    environment:
+      name: "{{ .App.Name }} {{ .Cat.Name | lower }}"
+      attributes:
+        - name: Cluster
+          value: "Local"
+        - name: "# servers"
+          value: |
+            {{ jsonPath ".spec.replicas" }}
+        - name: "Deployment Mode"
+          value: |
+            {{ jsonPath ".spec.template.spec.containers[0].env[?(@.name=="APWIDE_DEPLOYMENT-MODE")].value" }}
+        # use templating to extract database name
+        - name: "Database"
+          value: |
+            {{ jsonPath ".spec.template.spec.containers[0].env[?(@.name=="SPRING_DATASOURCE_URL")].value" }}
+        - name: "Base URL"
+          value: |
+            {{ jsonPath ".spec.template.spec.containers[0].env[?(@.name=="ADDON_BASE-URL")].value" }}
+    selectors:
+      - namespace: golive-local
+        labelQuery: "apwide.net/app in (golive-api, golive-api-async)"
+  - id: golive-local
+    autoCreate: true
+    category:
+      name: "Local" # id vs name
+    environment:
+      name: |
+        {{ .App.Name }} {{ .Cat.Name | lower }}
+      attributes:
+        - name: Cluster
+          value: "Local"
+        - name: "# servers"
+          fromPath: ".spec.replicas"
+    selectors:
+      - namespace: golive-local
+        labelQuery: "apwide.net/app in (golive-web, atlassian-host, gateway)"

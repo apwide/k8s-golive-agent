@@ -14,30 +14,19 @@ type AttributeDefinition struct {
 }
 
 type NameReferenceSource struct {
-	Value      string
-	Label      string
-	Annotation string
-	Template   string
+	// Id string
+	Name string
 }
 
-type NamespacedSource struct {
-	Namespace bool
-}
-
-type CombinedReferenceSource struct {
+type DeploymentSource struct {
 	NameReferenceSource `mapstructure:",squash"`
-	NamespacedSource    `mapstructure:",squash"`
-}
-
-type VersionSource struct {
-	CombinedReferenceSource `mapstructure:",squash"`
-	Ignore                  bool
+	Ignore              bool
+	Attributes          []AttributeSource
 }
 
 type AttributeSource struct {
-	Name     string `yaml:"name"`
-	Value    string `yaml:"value"`
-	FromPath string `yaml:"fromPath"`
+	Name  string `yaml:"name"`
+	Value string `yaml:"value"`
 }
 
 // Selector are applied on pod's
@@ -60,15 +49,20 @@ type StatusMapping struct {
 	Up     NamedReference
 }
 
+type EnvironmentSource struct {
+	NameReferenceSource `mapstructure:",squash"`
+	Url                 string
+	Attributes          []AttributeSource
+}
+
 type Listener struct {
-	Id                    string
-	AutoCreate            bool
-	Category              CombinedReferenceSource
-	Application           CombinedReferenceSource
-	Name                  CombinedReferenceSource
-	Version               VersionSource
-	Selectors             []Selector
-	EnvironmentAttributes []AttributeSource
+	Id          string
+	AutoCreate  bool
+	Category    NameReferenceSource
+	Application NameReferenceSource
+	Environment EnvironmentSource
+	Deployment  DeploymentSource
+	Selectors   []Selector
 }
 
 type Config struct {
@@ -90,7 +84,7 @@ type Config struct {
 
 func (l *Listener) FixedAttributes() map[string]string {
 	attributes := make(map[string]string)
-	for _, attribute := range l.EnvironmentAttributes {
+	for _, attribute := range l.Environment.Attributes {
 		if attribute.Value != "" {
 			attributes[attribute.Name] = attribute.Value
 		}

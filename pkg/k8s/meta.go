@@ -39,6 +39,7 @@ type DaemonSet struct {
 }
 
 type MetaResource struct {
+	ns *corev1.Namespace
 	metav1.Object
 	metav1.Type
 	Listenable `json:",inline"`
@@ -103,15 +104,49 @@ func (d DaemonSet) getDeployedDate() string {
 }
 
 func (rsc *MetaResource) GetJsonPath(path string) (string, error) {
-	return extractJsonPathValue(rsc, path)
+	return renderJsonPath(rsc.Listenable.GetOriginal(), path)
 }
 
 func (rsc *MetaResource) GetLabel(label string) string {
 	return rsc.GetLabels()[label]
 }
 
+func (rsc *MetaResource) GetNsLabel(label string) string {
+	return rsc.ns.GetLabels()[label]
+}
+
+func (rsc *MetaResource) GetNsAnnotation(annotation string) string {
+	return rsc.ns.GetAnnotations()[annotation]
+}
+
+func (rsc *MetaResource) GetNsJsonPath(path string) (string, error) {
+	return renderJsonPath(rsc.ns, path)
+}
+
 func (rsc *MetaResource) GetAnnotation(annotation string) string {
 	return rsc.GetAnnotations()[annotation]
+}
+
+func (rsc *MetaResource) GetMainImageTag() (string, error) {
+	if len(rsc.GetPodTemplate().Spec.Containers) == 0 {
+		return "", nil
+	}
+	if image, err := parseContainerImage(rsc.GetPodTemplate().Spec.Containers[0].Image); err != nil {
+		return "", err
+	} else {
+		return image.tag, nil
+	}
+}
+
+func (rsc *MetaResource) GetMainImageName() (string, error) {
+	if len(rsc.GetPodTemplate().Spec.Containers) == 0 {
+		return "", nil
+	}
+	if image, err := parseContainerImage(rsc.GetPodTemplate().Spec.Containers[0].Image); err != nil {
+		return "", err
+	} else {
+		return image.image, nil
+	}
 }
 
 func ToListenable(obj interface{}) (Listenable, error) {
@@ -127,7 +162,7 @@ func ToListenable(obj interface{}) (Listenable, error) {
 	}
 }
 
-func NewMetaResource(obj interface{}) (*MetaResource, error) {
+func NewMetaResource(obj interface{}, ns *corev1.Namespace) (*MetaResource, error) {
 	listenable, err := ToListenable(obj)
 	if err != nil {
 		return nil, err
@@ -141,6 +176,7 @@ func NewMetaResource(obj interface{}) (*MetaResource, error) {
 		return nil, err
 	}
 	return &MetaResource{
+		ns,
 		accessor,
 		typeAccessor,
 		listenable,

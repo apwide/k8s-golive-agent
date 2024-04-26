@@ -10,7 +10,7 @@ import (
 	"testing"
 )
 
-func loadMetaFrom(path string) *MetaResource {
+func loadRsc(path string) interface{} {
 	file, err := os.ReadFile(path)
 	if err != nil {
 		panic(err)
@@ -20,8 +20,11 @@ func loadMetaFrom(path string) *MetaResource {
 	if err = runtime.DecodeInto(decoder, file, d); err != nil {
 		panic(err)
 	}
+	return d
+}
 
-	if r, err := NewMetaResource(d); err != nil {
+func loadMetaFrom(path string) *MetaResource {
+	if r, err := NewMetaResource(loadRsc(path), nil); err != nil {
 		panic(err)
 	} else {
 		return r
@@ -30,14 +33,14 @@ func loadMetaFrom(path string) *MetaResource {
 
 func TestSimpleJsonPath(t *testing.T) {
 	r := loadMetaFrom("../../test/data/deployment.json")
-	result, err := extractJsonPathValue(r, ".metadata.namespace")
+	result, err := renderJsonPathFromMeta(r, ".metadata.namespace")
 	assert.NoError(t, err, "should find namespace in json")
 	assert.Equal(t, "golive-dev", result)
 }
 
 func TestComplexJsonPath(t *testing.T) {
 	r := loadMetaFrom("../../test/data/deployment.json")
-	result, err := extractJsonPathValue(r, `$.spec.template.spec.containers[0].env[?(@.name=="APWIDE_DEPLOYMENT-MODE")].value`)
+	result, err := renderJsonPathFromMeta(r, `$.spec.template.spec.containers[0].env[?(@.name=="APWIDE_DEPLOYMENT-MODE")].value`)
 	assert.NoError(t, err, "should find env APWIDE_DEPLOYMENT-MODE in json")
 	assert.Equal(t, "true", result)
 }
@@ -56,7 +59,7 @@ func TestTemplateFromContext(t *testing.T) {
 	ctx["App"] = app
 	ctx["Cat"] = cat
 
-	output, err := renderTemplate("{{ .App.Name }} - {{ .Cat.Name }}", r, ctx)
+	output, err := renderTemplate("{{ .App.Name }} - {{ .Cat.Name }}", r, AppKey, ctx)
 	assert.NoError(t, err, "should not fail to render template")
 	assert.Equal(t, appName+" - "+catName, output)
 }
@@ -75,7 +78,7 @@ func TestTemplateFromContextWithLower(t *testing.T) {
 	ctx["App"] = app
 	ctx["Cat"] = cat
 
-	output, err := renderTemplate(`{{ .App.Name }} {{.Cat.Name | lower }}`, r, ctx)
+	output, err := renderTemplate(`{{ .App.Name }} {{.Cat.Name | lower }}`, r, AppKey, ctx)
 	assert.NoError(t, err, "should not fail to render template")
 	assert.Equal(t, "eCommerce dev", output)
 }
@@ -84,7 +87,7 @@ func TestTemplateFromJsonPath(t *testing.T) {
 	r := loadMetaFrom("../../test/data/deployment.json")
 	ctx := make(map[string]interface{})
 
-	output, err := renderTemplate(`{{ jsonPath ".metadata.namespace" }}`, r, ctx)
+	output, err := renderTemplate(`{{ jsonPath ".metadata.namespace" }}`, r, AppKey, ctx)
 	assert.NoError(t, err, "should not fail to render template")
 	assert.Equal(t, "golive-dev", output)
 }
@@ -93,7 +96,7 @@ func TestTemplateFromLabel(t *testing.T) {
 	r := loadMetaFrom("../../test/data/deployment.json")
 	ctx := make(map[string]interface{})
 
-	output, err := renderTemplate(`{{ label "apwide.net/app" }}`, r, ctx)
+	output, err := renderTemplate(`{{ label "apwide.net/app" }}`, r, AppKey, ctx)
 	assert.NoError(t, err, "should not fail to render template")
 	assert.Equal(t, "golive-api", output)
 }
@@ -102,7 +105,7 @@ func TestTemplateFromAnnotation(t *testing.T) {
 	r := loadMetaFrom("../../test/data/deployment.json")
 	ctx := make(map[string]interface{})
 
-	output, err := renderTemplate(`{{ annotation "deployment.kubernetes.io/revision" }}`, r, ctx)
+	output, err := renderTemplate(`{{ annotation "deployment.kubernetes.io/revision" }}`, r, AppKey, ctx)
 	assert.NoError(t, err, "should not fail to render template")
 	assert.Equal(t, "26", output)
 }

@@ -105,6 +105,7 @@ func Start(ctx context.Context, kubeconfig *rest.Config, cfg Config) {
 }
 
 type Controller struct {
+	clientSet         *kubernetes.Clientset
 	replicaSetLister  appslisters.ReplicaSetLister
 	statefulSetLister appslisters.StatefulSetLister
 	deploymentsLister appslisters.DeploymentLister
@@ -141,6 +142,7 @@ func NewController(
 	workqueue := workqueue.NewRateLimitingQueue(ratelimiter)
 
 	controller := &Controller{
+		clientSet:         clientSet,
 		deploymentsLister: deploymentInformer.Lister(),
 		replicaSetLister:  replicaSetInformer.Lister(),
 		statefulSetLister: statefulSetInformer.Lister(),
@@ -280,7 +282,11 @@ func (c *Controller) sync(ctx context.Context, key string) error {
 		logger.V(2).Info("No related owner found")
 		return nil
 	}
-	metaResource, err := NewMetaResource(owner)
+	ns, err := c.clientSet.CoreV1().Namespaces().Get(ctx, namespace, metav1.GetOptions{})
+	if err != nil {
+		return err
+	}
+	metaResource, err := NewMetaResource(owner, ns)
 	if err != nil {
 		return err
 	}

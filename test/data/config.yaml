@@ -9,7 +9,7 @@ listeners:
         golive.apwide.net/app: golive-api
         golive.apwide.net/cat: Dev
     category:
-      value: "Dev" # id vs name
+      name: "Dev" # id vs name
     application:
-      label: "app" # id vs name
+      name: "app" # id vs name
     autoCreate: true

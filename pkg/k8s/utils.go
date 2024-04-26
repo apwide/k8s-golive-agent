@@ -11,14 +11,18 @@ import (
 	"text/template"
 )
 
-func extractJsonPathValue(d *MetaResource, jsonPath string) (string, error) {
+func renderJsonPathFromMeta(d *MetaResource, jsonPath string) (string, error) {
+	return renderJsonPath(d.Listenable.GetOriginal(), jsonPath)
+}
+
+func renderJsonPath(obj interface{}, jsonPath string) (string, error) {
 	template := jsonpath.New("template")
 	err := template.Parse("{ " + jsonPath + " }")
 	if err != nil {
 		return "", err
 	}
 	buf := new(bytes.Buffer)
-	err = template.Execute(buf, d.Listenable.GetOriginal())
+	err = template.Execute(buf, obj)
 	return buf.String(), err
 }
 
@@ -41,10 +45,45 @@ func parseContainerImage(image string) (*dockerImage, error) {
 	return nil, fmt.Errorf("unable to parse container image %q", image)
 }
 
-func renderTemplate(input string, resource *MetaResource, ctx map[string]interface{}) (string, error) {
+func renderTemplate(input string, resource *MetaResource, defaultKey string, ctx map[string]interface{}) (string, error) {
 	funcs := template.FuncMap{
-		"jsonPath":   resource.GetJsonPath,
-		"label":      resource.GetLabel,
+		"mainImageName": resource.GetMainImageName,
+		"mainImageTag":  resource.GetMainImageTag,
+		"jsonPath":      resource.GetJsonPath,
+		"label":         resource.GetLabel,
+		"name":          resource.GetName,
+		"defaultLabel": func() string {
+			if defaultKey != None {
+				return resource.GetLabel(defaultKey)
+			} else {
+				return None
+			}
+		},
+		"defaultAnnotation": func() string {
+			if defaultKey != None {
+				return resource.GetAnnotation(defaultKey)
+			} else {
+				return None
+			}
+		},
+		"nsLabel":      resource.GetNsLabel,
+		"nsName":       resource.ns.GetName,
+		"nsAnnotation": resource.GetNsAnnotation,
+		"nsDefaultLabel": func() string {
+			if defaultKey != None {
+				return resource.GetNsLabel(defaultKey)
+			} else {
+				return None
+			}
+		},
+		"nsDefaultAnnotation": func() string {
+			if defaultKey != None {
+				return resource.GetNsAnnotation(defaultKey)
+			} else {
+				return None
+			}
+		},
+		"nsJsonPath": resource.GetNsJsonPath,
 		"annotation": resource.GetAnnotation,
 		"title":      strings.ToTitle,
 		"lower":      strings.ToLower,
