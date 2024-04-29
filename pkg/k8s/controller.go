@@ -97,6 +97,7 @@ func Start(ctx context.Context, kubeconfig *rest.Config, cfg Config) {
 		informerFactory.Apps().V1().ReplicaSets(),
 		informerFactory.Apps().V1().StatefulSets(),
 		informerFactory.Apps().V1().Deployments(),
+		informerFactory.Apps().V1().DaemonSets(),
 		informerFactory.Core().V1().Pods(),
 		handlers,
 	)
@@ -130,6 +131,7 @@ type Controller struct {
 	replicaSetLister  appslisters.ReplicaSetLister
 	statefulSetLister appslisters.StatefulSetLister
 	deploymentsLister appslisters.DeploymentLister
+	daemonSetLister   appslisters.DaemonSetLister
 	deploymentSync    cache.InformerSynced
 	podsLister        corelisters.PodLister
 	podSynced         cache.InformerSynced
@@ -148,6 +150,7 @@ func NewController(
 	replicaSetInformer appsinformers.ReplicaSetInformer,
 	statefulSetInformer appsinformers.StatefulSetInformer,
 	deploymentInformer appsinformers.DeploymentInformer,
+	daemonSetLister appsinformers.DaemonSetInformer,
 	podInformer coreinformers.PodInformer,
 	handlers *Handlers) *Controller {
 
@@ -170,6 +173,7 @@ func NewController(
 		deploymentsLister: deploymentInformer.Lister(),
 		replicaSetLister:  replicaSetInformer.Lister(),
 		statefulSetLister: statefulSetInformer.Lister(),
+		daemonSetLister:   daemonSetLister.Lister(),
 		podsLister:        podInformer.Lister(),
 		podSynced:         podInformer.Informer().HasSynced,
 		workqueue:         workqueue,
@@ -391,7 +395,18 @@ func (c *Controller) findOwner(ctx context.Context, pod *corev1.Pod) (interface{
 			}
 			return nil, err
 		}
+	case "DaemonSet":
+		{
+			daemonSet, err := c.daemonSetLister.DaemonSets(namespace).Get(owner.Name)
+			if err == nil {
+				return daemonSet, nil
+			} else if k8serrors.IsNotFound(err) {
+				logger.V(2).Info("Pod owned by a not found DaemonSet")
+				return nil, nil
+			}
+			return nil, err
+		}
 	default:
-		return nil, fmt.Errorf("uknown owner Kind %s for pod %s/%s", owner.Kind, namespace, name)
+		return nil, fmt.Errorf("unknown owner Kind %s for pod %s/%s", owner.Kind, namespace, name)
 	}
 }
