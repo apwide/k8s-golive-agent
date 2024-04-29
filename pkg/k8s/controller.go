@@ -16,11 +16,13 @@ import (
 	"k8s.io/apimachinery/pkg/util/wait"
 	kubeinformers "k8s.io/client-go/informers"
 	appsinformers "k8s.io/client-go/informers/apps/v1"
+	batchinformers "k8s.io/client-go/informers/batch/v1"
 	coreinformers "k8s.io/client-go/informers/core/v1"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/kubernetes/scheme"
 	typedcorev1 "k8s.io/client-go/kubernetes/typed/core/v1"
 	appslisters "k8s.io/client-go/listers/apps/v1"
+	batchlisters "k8s.io/client-go/listers/batch/v1"
 	corelisters "k8s.io/client-go/listers/core/v1"
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/cache"
@@ -98,6 +100,8 @@ func Start(ctx context.Context, kubeconfig *rest.Config, cfg Config) {
 		informerFactory.Apps().V1().StatefulSets(),
 		informerFactory.Apps().V1().Deployments(),
 		informerFactory.Apps().V1().DaemonSets(),
+		informerFactory.Batch().V1().Jobs(),
+		informerFactory.Batch().V1().CronJobs(),
 		informerFactory.Core().V1().Pods(),
 		handlers,
 	)
@@ -132,6 +136,8 @@ type Controller struct {
 	statefulSetLister appslisters.StatefulSetLister
 	deploymentsLister appslisters.DeploymentLister
 	daemonSetLister   appslisters.DaemonSetLister
+	jobLister         batchlisters.JobLister
+	cronJobLister     batchlisters.CronJobLister
 	deploymentSync    cache.InformerSynced
 	podsLister        corelisters.PodLister
 	podSynced         cache.InformerSynced
@@ -150,7 +156,9 @@ func NewController(
 	replicaSetInformer appsinformers.ReplicaSetInformer,
 	statefulSetInformer appsinformers.StatefulSetInformer,
 	deploymentInformer appsinformers.DeploymentInformer,
-	daemonSetLister appsinformers.DaemonSetInformer,
+	daemonSetInformer appsinformers.DaemonSetInformer,
+	jobInformer batchinformers.JobInformer,
+	cronJobInformer batchinformers.CronJobInformer,
 	podInformer coreinformers.PodInformer,
 	handlers *Handlers) *Controller {
 
@@ -173,7 +181,9 @@ func NewController(
 		deploymentsLister: deploymentInformer.Lister(),
 		replicaSetLister:  replicaSetInformer.Lister(),
 		statefulSetLister: statefulSetInformer.Lister(),
-		daemonSetLister:   daemonSetLister.Lister(),
+		jobLister:         jobInformer.Lister(),
+		cronJobLister:     cronJobInformer.Lister(),
+		daemonSetLister:   daemonSetInformer.Lister(),
 		podsLister:        podInformer.Lister(),
 		podSynced:         podInformer.Informer().HasSynced,
 		workqueue:         workqueue,
@@ -353,8 +363,31 @@ func (c *Controller) findOwner(ctx context.Context, pod *corev1.Pod) (interface{
 	switch owner.Kind {
 	case "Job":
 		{
-			logger.V(2).Info("Pod owned by Job is ignored")
-			return nil, nil
+			job, err := c.jobLister.Jobs(namespace).Get(owner.Name)
+			if err != nil {
+				if k8serrors.IsNotFound(err) {
+					logger.V(2).Info("Pod owned by a not found Job")
+					return nil, nil
+				}
+				return nil, err
+			}
+
+			owner = metav1.GetControllerOf(job)
+			if owner == nil {
+				logger.V(2).Info("Pod owned by Job without owner is ignored")
+				return nil, nil
+			}
+
+			cronJob, err := c.cronJobLister.CronJobs(namespace).Get(owner.Name)
+			if err != nil {
+				if k8serrors.IsNotFound(err) {
+					logger.V(2).Info("Pod owned by a not found CronJob")
+					return nil, nil
+				}
+				return nil, err
+			}
+
+			return cronJob, nil
 		}
 	case "ReplicaSet":
 		{

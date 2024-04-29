@@ -3,6 +3,7 @@ package k8s
 import (
 	"fmt"
 	appsv1 "k8s.io/api/apps/v1"
+	batchv1 "k8s.io/api/batch/v1"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -36,6 +37,9 @@ type StatefulSet struct {
 }
 type DaemonSet struct {
 	*appsv1.DaemonSet `json:",inline"`
+}
+type CronJob struct {
+	*batchv1.CronJob `json:",inline"`
 }
 
 type MetaResource struct {
@@ -103,6 +107,22 @@ func (d DaemonSet) getDeployedDate() string {
 	return ""
 }
 
+func (j CronJob) GetOriginal() interface{} {
+	return j.CronJob
+}
+
+func (j CronJob) GetPodTemplate() corev1.PodTemplateSpec {
+	return j.Spec.JobTemplate.Spec.Template
+}
+
+func (j CronJob) getDeployedDate() string {
+	if j.CronJob.Status.LastScheduleTime != nil {
+		return j.CronJob.Status.LastScheduleTime.Format(time.RFC3339)
+	} else {
+		return ""
+	}
+}
+
 func (rsc *MetaResource) GetJsonPath(path string) (string, error) {
 	return renderJsonPath(rsc.Listenable.GetOriginal(), path)
 }
@@ -157,6 +177,8 @@ func ToListenable(obj interface{}) (Listenable, error) {
 		return StatefulSet{obj.(*appsv1.StatefulSet)}, nil
 	case *appsv1.DaemonSet:
 		return DaemonSet{obj.(*appsv1.DaemonSet)}, nil
+	case *batchv1.CronJob:
+		return CronJob{obj.(*batchv1.CronJob)}, nil
 	default:
 		return nil, fmt.Errorf("object does not implement the Deployment, StatefulSet or DaemonSet: %q", obj)
 	}
@@ -195,6 +217,9 @@ func MetaStatus(resource *MetaResource) (EnvironmentStatus, error) {
 	case *appsv1.StatefulSet:
 		o, _ := obj.(*appsv1.StatefulSet)
 		return StatefulSetStatus(o), nil
+	case *batchv1.CronJob:
+		o, _ := obj.(*batchv1.CronJob)
+		return CronJobStatus(o), nil
 	default:
 		return Unknown, fmt.Errorf("resource does not implement the Deployment, StatefulSet or DaemonSet: %q", obj)
 	}
@@ -277,6 +302,11 @@ func StatefulSetStatus(sts *appsv1.StatefulSet) EnvironmentStatus {
 		return Deploy
 	}
 	return Up
+}
+
+func CronJobStatus(cron *batchv1.CronJob) EnvironmentStatus {
+	// TODO how to ?
+	return Unknown
 }
 
 func revision(deployment *appsv1.Deployment) (int64, error) {
