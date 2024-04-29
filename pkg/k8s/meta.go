@@ -283,7 +283,7 @@ func StatefulSetStatus(sts *appsv1.StatefulSet) EnvironmentStatus {
 		// status only available for rolling update TODO not for env
 		return Unknown
 	}
-	if sts.Status.ObservedGeneration == 0 || sts.Status.ObservedGeneration <= sts.Generation {
+	if sts.Status.ObservedGeneration == 0 || sts.Status.ObservedGeneration < sts.Generation {
 		// rsc being updated // TODO deploy ?
 		return Unknown
 	}
