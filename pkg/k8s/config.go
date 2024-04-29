@@ -1,9 +1,11 @@
 package k8s
 
 import (
+	"bytes"
 	"context"
 	"fmt"
 	"github.com/spf13/viper"
+	"gopkg.in/yaml.v3"
 	"k8s.io/klog/v2"
 	"strings"
 )
@@ -65,22 +67,26 @@ type Listener struct {
 	Selectors   []Selector
 }
 
+type GoliveConfig struct {
+	Url             string
+	Username        string
+	Password        string
+	Token           string
+	Offline         bool
+	Yaml            bool
+	CacheExpiration string
+	DefaultReSync   string
+	MultiListener   bool
+}
+
+type InitializeConfig struct {
+	EnvironmentAttributes []AttributeDefinition
+	DeploymentAttributes  []AttributeDefinition
+}
+
 type Config struct {
-	Golive struct {
-		Url             string
-		Username        string
-		Password        string
-		Token           string
-		Offline         bool
-		Yaml            bool
-		CacheExpiration string
-		DefaultReSync   string
-		MultiListener   bool
-	}
-	Initialize struct {
-		EnvironmentAttributes []AttributeDefinition
-		DeploymentAttributes  []AttributeDefinition
-	}
+	Golive        GoliveConfig
+	Initialize    InitializeConfig
 	StatusMapping *StatusMapping
 	Listeners     []Listener
 }
@@ -95,9 +101,14 @@ func (l *Listener) FixedAttributes() map[string]string {
 	return attributes
 }
 
+func FakeConfig() Config {
+	return Config{}
+}
+
 func LoadConfig(path string) (cfg Config, err error) {
 	logger := klog.FromContext(context.Background())
 	logger.Info("Load Golive config", "path", path)
+
 	//viper.AddConfigPath(path)
 	//viper.SetConfigName("app")
 	//viper.SetConfigType("env")
@@ -105,14 +116,27 @@ func LoadConfig(path string) (cfg Config, err error) {
 	viper.SetConfigFile(path)
 	viper.AutomaticEnv()
 
+	r, _ := yaml.Marshal(FakeConfig())
+	viper.ReadConfig(bytes.NewReader(r))
+
+	for _, key := range viper.AllKeys() {
+		envKey := strings.ToUpper(strings.ReplaceAll(key, ".", "_"))
+		err = viper.BindEnv(key, envKey)
+		if err != nil {
+			return
+		}
+	}
+
 	err = viper.ReadInConfig()
 	if err != nil {
 		return
 	}
+
 	err = viper.Unmarshal(&cfg)
 	if err != nil {
 		return
 	}
+
 	listenerKeys := make(map[string]bool)
 	for _, listener := range cfg.Listeners {
 		if listenerKeys[listener.Id] {
