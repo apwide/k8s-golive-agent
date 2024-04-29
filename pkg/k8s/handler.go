@@ -82,19 +82,18 @@ func NewHandler(ctx context.Context, clientSet *kubernetes.Clientset, listener L
 	}
 }
 
-func (w *Handlers) getHandlerFor(pod *corev1.Pod) *Handler {
-	index := slices.IndexFunc(w.handlers, func(w *Handler) bool {
-		return w.match(pod)
-	})
-	if index > -1 {
-		return w.handlers[index]
-	} else {
-		return nil
+func (w *Handlers) getHandlersFor(pod *corev1.Pod) []*Handler {
+	matchedHandlers := make([]*Handler, 0)
+	for _, handler := range w.handlers {
+		if handler.match(pod) {
+			matchedHandlers = append(matchedHandlers, handler)
+		}
 	}
+	return matchedHandlers
 }
 
 func (w *Handlers) isListening(pod *corev1.Pod) bool {
-	return w.getHandlerFor(pod) != nil
+	return len(w.getHandlersFor(pod)) > 0
 }
 
 type ResourceSelector struct {

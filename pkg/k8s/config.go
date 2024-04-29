@@ -2,6 +2,7 @@ package k8s
 
 import (
 	"context"
+	"fmt"
 	"github.com/spf13/viper"
 	"k8s.io/klog/v2"
 	"strings"
@@ -74,6 +75,7 @@ type Config struct {
 		Yaml            bool
 		CacheExpiration string
 		DefaultReSync   string
+		MultiListener   bool
 	}
 	Initialize struct {
 		EnvironmentAttributes []AttributeDefinition
@@ -108,5 +110,17 @@ func LoadConfig(path string) (cfg Config, err error) {
 		return
 	}
 	err = viper.Unmarshal(&cfg)
+	if err != nil {
+		return
+	}
+	listenerKeys := make(map[string]bool)
+	for _, listener := range cfg.Listeners {
+		if listenerKeys[listener.Id] {
+			err = fmt.Errorf("duplicated listener id for %s", listener.Id)
+			return
+		} else {
+			listenerKeys[listener.Id] = true
+		}
+	}
 	return
 }

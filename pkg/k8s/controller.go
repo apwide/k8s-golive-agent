@@ -92,6 +92,7 @@ func Start(ctx context.Context, kubeconfig *rest.Config, cfg Config) {
 	informerFactory := kubeinformers.NewSharedInformerFactoryWithOptions(clientSet, defaultReSync /*, kubeinformers.WithNamespace("golive-local")*/)
 	controller := NewController(
 		ctx,
+		&cfg,
 		clientSet,
 		informerFactory.Apps().V1().ReplicaSets(),
 		informerFactory.Apps().V1().StatefulSets(),
@@ -137,10 +138,12 @@ type Controller struct {
 	// recorder is an event recorder for recording Event resources to the Kubernetes API.
 	recorder record.EventRecorder
 	handlers *Handlers
+	cfg      *Config
 }
 
 func NewController(
 	ctx context.Context,
+	cfg *Config,
 	clientSet *kubernetes.Clientset,
 	replicaSetInformer appsinformers.ReplicaSetInformer,
 	statefulSetInformer appsinformers.StatefulSetInformer,
@@ -163,6 +166,7 @@ func NewController(
 
 	controller := &Controller{
 		clientSet:         clientSet,
+		cfg:               cfg,
 		deploymentsLister: deploymentInformer.Lister(),
 		replicaSetLister:  replicaSetInformer.Lister(),
 		statefulSetLister: statefulSetInformer.Lister(),
@@ -174,6 +178,7 @@ func NewController(
 	}
 
 	logger.Info("Setting up event handlers")
+	logger.V(4).Info("Listener Mode", "multi", cfg.Golive.MultiListener)
 
 	// Set up an event handler for when Foo resources change
 	podInformer.Informer().AddEventHandler(cache.ResourceEventHandlerFuncs{
@@ -288,10 +293,12 @@ func (c *Controller) sync(ctx context.Context, key string) error {
 		return err
 	}
 
-	handler := c.handlers.getHandlerFor(pod)
-	if handler == nil {
+	handlers := c.handlers.getHandlersFor(pod)
+	if len(handlers) <= 0 {
 		logger.V(2).Info("No handler")
 		return nil
+	} else {
+		logger.V(2).Info("Found handlers", "count", len(handlers))
 	}
 	owner, err := c.findOwner(ctx, pod)
 	if err != nil {
@@ -310,7 +317,13 @@ func (c *Controller) sync(ctx context.Context, key string) error {
 	if err != nil {
 		return err
 	}
-	handler.Handle(metaResource)
+	if !c.cfg.Golive.MultiListener {
+		handlers[0].Handle(metaResource)
+	} else {
+		for _, handler := range handlers {
+			handler.Handle(metaResource)
+		}
+	}
 	// c.recorder.Event(pod, corev1.EventTypeNormal, SuccessSynced, MessageSynced)
 	return nil
 }
