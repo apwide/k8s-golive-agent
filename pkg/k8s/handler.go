@@ -47,7 +47,7 @@ func (g *GoliveLoggerSender) PostEnvironmentInformation(ctx context.Context, inf
 	}, nil
 }
 
-func NewHandler(ctx context.Context, clientSet *kubernetes.Clientset, listener Listener, golive GoliveDataSender, cfg Config) *Handler {
+func NewHandler(ctx context.Context, clientSet *kubernetes.Clientset, listener Listener, golive GoliveDataSender, cfg Config, cache *cache.GoliveCache) *Handler {
 	logger := klog.FromContext(ctx).WithValues(
 		"handler", listener.Id,
 	)
@@ -78,6 +78,7 @@ func NewHandler(ctx context.Context, clientSet *kubernetes.Clientset, listener L
 		selectors:             selectors,
 		clientSet:             clientSet,
 		environmentAttributes: listener.FixedAttributes(),
+		cache:                 cache,
 	}
 }
 
@@ -123,6 +124,7 @@ type Handlers struct {
 
 type Handler struct {
 	listener              *Listener
+	cache                 *cache.GoliveCache
 	statusMapping         *StatusMapping
 	ctx                   context.Context
 	logger                klog.Logger
@@ -230,7 +232,7 @@ func (w *Handler) Handle(resource *MetaResource) {
 		Status:     status,
 	}
 
-	updated := goliveCache.SetIfOutdated(environmentInfo.EnvironmentSelector, environmentInfo)
+	updated := w.cache.SetIfOutdated(environmentInfo.EnvironmentSelector, environmentInfo)
 	if !updated {
 		logger.V(4).Info("Golive should be up-to-date")
 		return
@@ -251,7 +253,7 @@ func (w *Handler) Handle(resource *MetaResource) {
 	if err != nil {
 		logger.Error(err, "Error on pushing data to Golive")
 	} else if envInfo.StatusCode < 200 || envInfo.StatusCode >= 400 {
-		goliveCache.Delete(environmentInfo.EnvironmentSelector)
+		w.cache.Delete(environmentInfo.EnvironmentSelector)
 		body, _ := io.ReadAll(envInfo.Body)
 		err = fmt.Errorf("golive replied with %d and body: %s", envInfo.StatusCode, string(body))
 		logger.Error(err, "Golive not updated")
@@ -272,10 +274,6 @@ const (
 	EnvAttributePrefix    = "env." + GolivePrefix
 	DeployAttributePrefix = "deploy." + GolivePrefix
 	UrlKey                = GolivePrefix + "url"
-)
-
-var (
-	goliveCache = cache.NewCache()
 )
 
 func isDefaultKey(key string) bool {

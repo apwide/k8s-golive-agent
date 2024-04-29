@@ -66,12 +66,14 @@ type Listener struct {
 
 type Config struct {
 	Golive struct {
-		Url      string
-		Username string
-		Password string
-		Token    string
-		Offline  bool
-		Yaml     bool
+		Url             string
+		Username        string
+		Password        string
+		Token           string
+		Offline         bool
+		Yaml            bool
+		CacheExpiration string
+		DefaultReSync   string
 	}
 	Initialize struct {
 		EnvironmentAttributes []AttributeDefinition

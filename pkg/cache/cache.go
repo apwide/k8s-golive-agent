@@ -16,8 +16,7 @@ type GoliveCache struct {
 	logger klog.Logger
 }
 
-func NewCache() *GoliveCache {
-	expiration := 1 * time.Minute
+func NewCache(expiration time.Duration) *GoliveCache {
 	return &GoliveCache{
 		cache:  cache2.New(expiration, expiration),
 		logger: klog.FromContext(context.Background()),

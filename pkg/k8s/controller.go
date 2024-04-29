@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	goliveCache "github.com/apwide/k8s-monitor/pkg/cache"
 	golive "github.com/apwide/k8s-monitor/pkg/golive"
 	"golang.org/x/time/rate"
 	"gopkg.in/yaml.v3"
@@ -61,15 +62,34 @@ func Start(ctx context.Context, kubeconfig *rest.Config, cfg Config) {
 		panic(err)
 	}
 
+	cacheExpiration := 10 * time.Minute
+	if cfg.Golive.CacheExpiration != "" {
+		if cfgExpiration, err := time.ParseDuration(cfg.Golive.CacheExpiration); err != nil {
+			logger.V(6).Error(err, "Wrong value for golive cache expiration")
+		} else {
+			cacheExpiration = cfgExpiration
+		}
+	}
+	cache := goliveCache.NewCache(cacheExpiration)
+
 	logger.Info("Start listeners")
 	handlerList := make([]*Handler, len(cfg.Listeners))
 	for i, listener := range cfg.Listeners {
-		handlerList[i] = NewHandler(ctx, clientSet, listener, goliveClient, cfg)
+		handlerList[i] = NewHandler(ctx, clientSet, listener, goliveClient, cfg, cache)
 	}
 	handlers := &Handlers{handlers: handlerList}
 
 	logger.Info("Start Controller")
-	informerFactory := kubeinformers.NewSharedInformerFactoryWithOptions(clientSet, time.Second*30 /*, kubeinformers.WithNamespace("golive-local")*/)
+
+	defaultReSync := 5 * time.Minute
+	if cfg.Golive.DefaultReSync != "" {
+		if cfgResync, err := time.ParseDuration(cfg.Golive.DefaultReSync); err != nil {
+			logger.V(6).Error(err, "Wrong value for golive cache expiration")
+		} else {
+			defaultReSync = cfgResync
+		}
+	}
+	informerFactory := kubeinformers.NewSharedInformerFactoryWithOptions(clientSet, defaultReSync /*, kubeinformers.WithNamespace("golive-local")*/)
 	controller := NewController(
 		ctx,
 		clientSet,
