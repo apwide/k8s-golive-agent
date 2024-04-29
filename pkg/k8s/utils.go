@@ -3,6 +3,8 @@ package k8s
 import (
 	"bytes"
 	"fmt"
+	"golang.org/x/text/cases"
+	"golang.org/x/text/language"
 	"k8s.io/client-go/util/jsonpath"
 	"os/user"
 	"path/filepath"
@@ -85,9 +87,9 @@ func renderTemplate(input string, resource *MetaResource, defaultKey string, ctx
 		},
 		"nsJsonPath": resource.GetNsJsonPath,
 		"annotation": resource.GetAnnotation,
-		"title":      strings.ToTitle,
-		"lower":      strings.ToLower,
-		"upper":      strings.ToUpper,
+		"title":      cases.Title(language.English).String,
+		"lower":      cases.Lower(language.English).String,
+		"upper":      cases.Upper(language.English).String,
 	}
 
 	tpl, err := template.New("tpl").Funcs(funcs).Parse(strings.TrimSpace(input))
