@@ -14,14 +14,13 @@ type AttributeDefinition struct {
 }
 
 type NameReferenceSource struct {
-	// Id string
 	Name string
 }
 
 type DeploymentSource struct {
-	NameReferenceSource `mapstructure:",squash"`
-	Ignore              bool
-	Attributes          []AttributeSource
+	VersionName string
+	Ignore      bool
+	Attributes  []AttributeSource
 }
 
 type AttributeSource struct {

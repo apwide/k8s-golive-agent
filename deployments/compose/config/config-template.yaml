@@ -29,8 +29,8 @@ listeners:
     autoCreate: true
     category:
     # application => from docker image
-    version:
-      name: "CLOUD-{{ mainImageTag }}"
+    deployment:
+      versionName: "CLOUD-{{ mainImageTag }}"
     environment:
       name: "{{ .App.Name }} {{ .Cat.Name | lower }}"
       attributes:

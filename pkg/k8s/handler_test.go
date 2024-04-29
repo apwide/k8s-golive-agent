@@ -34,5 +34,4 @@ func TestGetAttributes(t *testing.T) {
 	assert.NoError(t, err, "Not able to read environment attributes")
 	assert.Len(t, attributes, 1, "Should have only one attributes")
 	assert.Equal(t, "MyValue", attributes["CustomAttribute"])
-
 }

@@ -362,8 +362,8 @@ func (w *Handler) getEnvironmentAttributes(resource *MetaResource) (map[string]s
 
 func (w *Handler) getVersionName(resource *MetaResource) (string, error) {
 	ctx := make(map[string]interface{})
-	if w.listener.Deployment.Name != "" {
-		return renderTemplate(w.listener.Deployment.Name, resource, VersionKey, ctx)
+	if w.listener.Deployment.VersionName != "" {
+		return renderTemplate(w.listener.Deployment.VersionName, resource, VersionKey, ctx)
 	}
 	defaultTemplates := []string{"{{ defaultLabel }}", "{{ defaultAnnotation }}", "{{ mainImageTag }}"}
 	for _, template := range defaultTemplates {
@@ -430,7 +430,10 @@ func (w *Handler) getStatus(resource *MetaResource) (*golive.NamedReference, err
 		if mappedStatus == nil {
 			return nil, nil
 		}
-		return &golive.NamedReference{Id: mappedStatus.Id, Name: mappedStatus.Name}, nil
+		return &golive.NamedReference{
+			Id:   mappedStatus.Id,
+			Name: mappedStatus.Name,
+		}, nil
 	}
 }
 
