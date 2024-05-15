@@ -1,6 +1,6 @@
-module github.com/apwide/k8s-monitor
+module github.com/apwide/k8s-golive-agent
 
-go 1.21.5
+go 1.22.3
 
 require (
 	github.com/deepmap/oapi-codegen/v2 v2.1.0

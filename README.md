@@ -1,4 +1,4 @@
-# k8s-golive-monitor
+# k8s-golive-agent
 
 ## Usage
 
@@ -6,8 +6,8 @@
 Run the controller (make sure your kubeconfig use the correct current context):
 ```shell
 go mod tity
-go run ./cmd/k8s-monitor
-go run ./cmd/k8s-monitor -kubeconfig=~/.kube/config -goliveconfig=./deployments/compose/config/config-template.yaml -v=2
+go run ./cmd/k8s-golive-agent
+go run ./cmd/k8s-golive-agent -kubeconfig=~/.kube/config -goliveconfig=./deployments/compose/config/config-template.yaml -v=2
 ```
 
 ### Configuration

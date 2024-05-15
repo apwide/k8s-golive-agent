@@ -69,8 +69,8 @@ jobs:
           context: .
           push: ${{ github.ref == 'refs/heads/main' || github.ref == 'refs/heads/develop' }}
           tags: |
-            apwide/k8s-golive-monitor:latest
-            apwide/k8s-golive-monitor:${{ steps.version.outputs.version != '' && steps.version.outputs.version || format('{0}-{1}', env.today, steps.commit.outputs.short) }}
+            apwide/k8s-golive-agent:latest
+            apwide/k8s-golive-agent:${{ steps.version.outputs.version != '' && steps.version.outputs.version || format('{0}-{1}', env.today, steps.commit.outputs.short) }}
 
       - id: docker-overview
         uses: peter-evans/dockerhub-description@v4
@@ -78,7 +78,7 @@ jobs:
         with:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
-          repository: apwide/k8s-golive-monitor
+          repository: apwide/k8s-golive-agent
           short-description: ${{ github.event.repository.description }}
           readme-filepath: ./DOCKERHUB.md
 

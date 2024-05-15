@@ -2,8 +2,8 @@ package main
 
 import (
 	"flag"
-	"github.com/apwide/k8s-monitor/pkg/k8s"
-	"github.com/apwide/k8s-monitor/pkg/signals"
+	"github.com/apwide/k8s-golive-agent/pkg/k8s"
+	"github.com/apwide/k8s-golive-agent/pkg/signals"
 	"k8s.io/client-go/tools/clientcmd"
 	"k8s.io/klog/v2"
 )
