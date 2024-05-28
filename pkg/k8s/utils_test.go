@@ -51,6 +51,13 @@ func TestComplexJsonPath(t *testing.T) {
 	assert.Equal(t, "true", result)
 }
 
+func TestQuoteJsonPath(t *testing.T) {
+	r := loadMetaFrom("../../test/data/deployment.json")
+	result, err := renderJsonPathFromMeta(r, `.spec.template.spec.containers[0].resources.limits.cpu`)
+	assert.NoError(t, err, "should find cpu limit without quote in json")
+	assert.Equal(t, "100m", result)
+}
+
 func TestTemplateFromContext(t *testing.T) {
 	r := loadMetaFrom("../../test/data/deployment.json")
 	appName := "eCommerce"

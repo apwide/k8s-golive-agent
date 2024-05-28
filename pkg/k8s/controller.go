@@ -41,8 +41,7 @@ func Start(ctx context.Context, kubeconfig *rest.Config, cfg Config) {
 	var goliveClient GoliveDataSender
 	goliveClient = &GoliveLoggerSender{logger, cfg.Golive.Yaml}
 	if !cfg.Golive.Offline {
-		var err error
-		goliveClient, err = golive.Golive(ctx, golive.GoliveConfig{
+		client, err := golive.Golive(ctx, golive.GoliveConfig{
 			Url:      cfg.Golive.Url,
 			Token:    cfg.Golive.Token,
 			Username: cfg.Golive.Username,
@@ -52,6 +51,7 @@ func Start(ctx context.Context, kubeconfig *rest.Config, cfg Config) {
 			logger.Error(err, "Unable to contact Golive")
 			panic(err)
 		}
+		goliveClient = client
 	}
 
 	//logger.Info("Initialized data into Golive")

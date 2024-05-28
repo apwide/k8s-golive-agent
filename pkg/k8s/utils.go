@@ -19,13 +19,21 @@ func renderJsonPathFromMeta(d *MetaResource, jsonPath string) (string, error) {
 
 func renderJsonPath(obj interface{}, jsonPath string) (string, error) {
 	template := jsonpath.New("template")
-	err := template.Parse("{ " + jsonPath + " }")
+	err := template.Parse("{" + jsonPath + "}")
 	if err != nil {
 		return "", err
 	}
 	buf := new(bytes.Buffer)
 	err = template.Execute(buf, obj)
-	return buf.String(), err
+	if err != nil {
+		return "", err
+	}
+	str := buf.String()
+	// when jsonpath result is an object (eg: Quantity for resource limit), sometimes, it uses objet UnMarshal for results which adds quote
+	if strings.HasPrefix(str, "\"") && strings.HasSuffix(str, "\"") {
+		str = strings.TrimPrefix(strings.TrimSuffix(str, "\""), "\"")
+	}
+	return str, err
 }
 
 type dockerImage struct {

@@ -262,7 +262,16 @@
               "successThreshold": 1,
               "timeoutSeconds": 10
             },
-            "resources": {},
+            "resources": {
+              "limits": {
+                "cpu": "100m",
+                "memory": "100Mi"
+              },
+              "requests": {
+                "cpu": "10m",
+                "memory": "10Mi"
+              }
+            },
             "startupProbe": {
               "failureThreshold": 25,
               "httpGet": {
