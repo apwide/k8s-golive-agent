@@ -305,6 +305,8 @@ In addition to the standard Go template functions, the following additional ones
 * **title** : https://pkg.go.dev/golang.org/x/text/cases#Title
 * **lower** : https://pkg.go.dev/golang.org/x/text/cases#Lower
 * **upper** : https://pkg.go.dev/golang.org/x/text/cases#Upper
+* **cutPrefix** : https://pkg.go.dev/strings#CutPrefix (usage: {{ cutPrefix "MyApp"  "My" }})
+* **cutSuffix** : https://pkg.go.dev/strings#CutSuffix (usage: {{ cutSuffix "WebApp" "App" }})
 * **annotation** : read annotation value from the owned resource
 * **label** : read label value from the owned resource
 * **jsonPath** : evaluate the jsonPath expression on the owned resource

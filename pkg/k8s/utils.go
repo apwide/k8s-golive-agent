@@ -98,6 +98,14 @@ func renderTemplate(input string, resource *MetaResource, defaultKey string, ctx
 		"title":      cases.Title(language.English).String,
 		"lower":      cases.Lower(language.English).String,
 		"upper":      cases.Upper(language.English).String,
+		"cutPrefix": func(value string, prefix string) string {
+			out, _ := strings.CutPrefix(value, prefix)
+			return out
+		},
+		"cutSuffix": func(value string, suffix string) string {
+			out, _ := strings.CutSuffix(value, suffix)
+			return out
+		},
 	}
 
 	tpl, err := template.New("tpl").Funcs(funcs).Parse(strings.TrimSpace(input))
