@@ -1,11 +1,8 @@
 services:
   monitor:
-    image: docker.apwide.com/k8s-golive-agent:latest
+    image: apwide/k8s-golive-agent:1.0.9
     network_mode: host
-    environment:
-      GOLIVE_CONFIG: /etc/golive/config-local.yaml
-      GOLIVE_KUBE_CONFIG: /etc/kube/config
-      LOG_LEVEL: Debug
+    entrypoint: "/k8s-golive-agent --kubeconfig=/etc/kube/config --goliveconfig=/etc/golive/config-template.yaml -v=2"
     volumes:
       - ./config:/etc/golive
       - ~/.kube/config:/etc/kube/config
