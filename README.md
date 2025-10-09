@@ -5,7 +5,7 @@
 ### Run the app locally
 Run the controller (make sure your kubeconfig use the correct current context):
 ```shell
-go mod tity
+go mod tidy
 go run ./cmd/k8s-golive-agent
 go run ./cmd/k8s-golive-agent -kubeconfig=~/.kube/config -goliveconfig=./deployments/compose/config/config-template.yaml -v=2
 ```
@@ -18,7 +18,7 @@ go run ./cmd/k8s-golive-agent -kubeconfig=~/.kube/config -goliveconfig=./deploym
 ### Update Golive API Client
 ```shell
 curl https://golive.apwide.net/public/swagger/json | jq > ./pkg/golive/golive.json
-go generate
+go generate pkg/golive/golive.go
 ```
 
 ### RBAC Required when running in-cluster mode
@@ -32,6 +32,27 @@ go generate
 track api calls done by kubectl, add **--v=6**
 ```shell
 kubectl get pods --v=6
+```
+
+check vulnerability:
+```shell
+# with the correct version of go
+go install golang.org/x/vuln/cmd/govulncheck@latest
+govulncheck ./...
+```
+
+build:
+```shell
+# updated dev
+go mod tidy
+# build
+go build -o k8s-golive-agent ./cmd/k8s-golive-agent/main.go
+```
+
+instal version of go:
+```shell
+go install golang.org/dl/go1.25.2@latest
+# update $PATH in shell rc file
 ```
 
 ## Information
