@@ -41,6 +41,11 @@ go install golang.org/x/vuln/cmd/govulncheck@latest
 govulncheck ./...
 ```
 
+replace indirect dependency when vulnerability:
+```shell
+go mod edit -replace=golang.org/x/net=golang.org/x/net@v0.38.0
+```
+
 build:
 ```shell
 # updated dev

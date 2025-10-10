@@ -4,7 +4,6 @@ go 1.25.2
 
 require (
 	github.com/getkin/kin-openapi v0.133.0
-	github.com/oapi-codegen/oapi-codegen/v2 v2.5.0
 	github.com/oapi-codegen/runtime v1.1.2
 	github.com/patrickmn/go-cache v2.1.0+incompatible
 	github.com/spf13/viper v1.18.2
@@ -23,6 +22,7 @@ require (
 	github.com/hashicorp/hcl v1.0.0 // indirect
 	github.com/magiconair/properties v1.8.7 // indirect
 	github.com/mitchellh/mapstructure v1.5.0 // indirect
+	github.com/oapi-codegen/oapi-codegen/v2 v2.5.0 // indirect
 	github.com/oasdiff/yaml v0.0.0-20250309154309-f31be36b4037 // indirect
 	github.com/oasdiff/yaml3 v0.0.0-20250309153720-d2182401db90 // indirect
 	github.com/pelletier/go-toml/v2 v2.1.0 // indirect
@@ -73,9 +73,9 @@ require (
 	github.com/stretchr/testify v1.10.0
 	golang.org/x/net v0.26.0 // indirect
 	golang.org/x/oauth2 v0.21.0 // indirect
-	golang.org/x/sys v0.21.0 // indirect
-	golang.org/x/term v0.21.0 // indirect
-	golang.org/x/text v0.20.0
+	golang.org/x/sys v0.31.0 // indirect
+	golang.org/x/term v0.30.0 // indirect
+	golang.org/x/text v0.23.0
 	golang.org/x/time v0.5.0
 	google.golang.org/protobuf v1.34.2 // indirect
 	gopkg.in/inf.v0 v0.9.1 // indirect
@@ -90,3 +90,7 @@ require (
 replace github.com/deepmap/oapi-codegen/v2 => github.com/oapi-codegen/oapi-codegen/v2 v2.5.0
 
 tool github.com/oapi-codegen/oapi-codegen/v2/cmd/oapi-codegen
+
+replace golang.org/x/net => golang.org/x/net v0.38.0
+
+replace golang.org/x/oauth2 => golang.org/x/oauth2 v0.27.0
