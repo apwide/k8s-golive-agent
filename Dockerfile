@@ -18,7 +18,7 @@ RUN go test ./... -v && \
     go build -o /k8s-golive-agent
 # RUN go build -o /app
 
-FROM gcr.io/distroless/base-debian11 AS build-release-stage
+FROM gcr.io/distroless/base-debian12 AS build-release-stage
 
 WORKDIR /
 
