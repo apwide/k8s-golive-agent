@@ -1,5 +1,5 @@
 #https://docs.docker.com/language/golang/build-images/
-FROM golang:1.25-alpine AS build-stage
+FROM golang:1.26-alpine AS build-stage
 
 WORKDIR /app
 COPY go.mod ./
@@ -14,11 +14,17 @@ COPY test ./test/
 ENV CGO_ENABLED=0
 ENV GOOS=linux
 
+RUN go version
+
+# RUN go clean -cache -modcache -i -r
+
 RUN go test ./... -v && \
     go build -o /k8s-golive-agent
 # RUN go build -o /app
 
-FROM gcr.io/distroless/base-debian12 AS build-release-stage
+RUN strings /k8s-golive-agent | grep "go1"
+
+FROM gcr.io/distroless/base-debian13 AS build-release-stage
 
 WORKDIR /
 

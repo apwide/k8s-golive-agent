@@ -56,7 +56,7 @@ go build -o k8s-golive-agent ./cmd/k8s-golive-agent/main.go
 
 instal version of go:
 ```shell
-go install golang.org/dl/go1.25.2@latest
+go install golang.org/dl/go1.25.5@latest
 # update $PATH in shell rc file
 ```
 
