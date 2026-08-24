@@ -1,5 +1,5 @@
 #https://docs.docker.com/language/golang/build-images/
-FROM golang:1.26-alpine AS build-stage
+FROM golang:1.27-alpine AS build-stage
 
 WORKDIR /app
 COPY go.mod ./
