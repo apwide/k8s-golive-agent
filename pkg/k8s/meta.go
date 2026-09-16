@@ -291,7 +291,7 @@ func StatefulSetStatus(sts *appsv1.StatefulSet) EnvironmentStatus {
 		// not all pod ready
 		return Deploy
 	}
-	if sts.Spec.Replicas != nil && sts.Spec.UpdateStrategy.RollingUpdate.Partition != nil {
+	if sts.Spec.Replicas != nil && sts.Spec.UpdateStrategy.RollingUpdate != nil && sts.Spec.UpdateStrategy.RollingUpdate.Partition != nil {
 		if sts.Status.UpdatedReplicas < (*sts.Spec.Replicas - *sts.Spec.UpdateStrategy.RollingUpdate.Partition) {
 			// not all pod updated
 			return Deploy
